@@ -2,7 +2,7 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL:
-    "http://localhost:5000/api",
+    "https://phone-inventory-app.onrender.com/api",
 });
 
 api.interceptors.request.use(
