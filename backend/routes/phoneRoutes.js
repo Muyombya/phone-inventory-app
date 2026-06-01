@@ -1,25 +1,105 @@
-const express = require("express");
+const express =
+  require("express");
+
+const router =
+  express.Router();
 
 const {
   getPhones,
   getPhoneById,
-  createPhone,
+  addPhone,
   updatePhone,
   deletePhone,
-} = require("../controllers/phoneController");
+  sellPhone,
+  transferPhone,
+} = require(
+  "../controllers/phoneController"
+);
 
-const protect = require("../middleware/authMiddleware");
+const {
+  protect,
+} = require(
+  "../middleware/authMiddleware"
+);
 
-const router = express.Router();
 
-router.get("/", protect, getPhones);
 
-router.get("/:id", protect, getPhoneById);
+// ==============================
+// GET ALL PHONES
+// ==============================
+router.get(
+  "/",
+  protect,
+  getPhones
+);
 
-router.post("/", protect, createPhone);
 
-router.put("/:id", protect, updatePhone);
 
-router.delete("/:id", protect, deletePhone);
+// ==============================
+// GET SINGLE PHONE
+// ==============================
+router.get(
+  "/:id",
+  protect,
+  getPhoneById
+);
 
-module.exports = router;
+
+
+// ==============================
+// ADD PHONE
+// ==============================
+router.post(
+  "/",
+  protect,
+  addPhone
+);
+
+
+
+// ==============================
+// UPDATE PHONE
+// ==============================
+router.put(
+  "/:id",
+  protect,
+  updatePhone
+);
+
+
+
+// ==============================
+// DELETE PHONE
+// ==============================
+router.delete(
+  "/:id",
+  protect,
+  deletePhone
+);
+
+
+
+// ==============================
+// SELL PHONE
+// ==============================
+router.post(
+  "/sell/:id",
+  protect,
+  sellPhone
+);
+
+
+
+// ==============================
+// TRANSFER PHONE
+// ==============================
+router.put(
+  "/transfer/:id",
+  protect,
+  transferPhone
+);
+
+
+
+module.exports =
+  router;

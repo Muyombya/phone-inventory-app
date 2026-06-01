@@ -1,38 +1,131 @@
-const jwt = require("jsonwebtoken");
+const jwt =
+  require("jsonwebtoken");
 
-const protect = (req, res, next) => {
-  let token;
+const User =
+  require("../models/User");
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith(
-      "Bearer"
-    )
-  ) {
-    token =
-      req.headers.authorization.split(" ")[1];
-  }
 
-  if (!token) {
-    return res.status(401).json({
-      message: "Not authorized",
-    });
-  }
+// =====================================
+// PROTECT ROUTES
+// =====================================
+const protect =
+  async (
+    req,
+    res,
+    next
+  ) => {
+    let token;
 
-  try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
+    // =========================
+    // CHECK TOKEN
+    // =========================
+    if (
+      req.headers
+        .authorization &&
+      req.headers.authorization.startsWith(
+        "Bearer"
+      )
+    ) {
+      try {
+        token =
+          req.headers.authorization.split(
+            " "
+          )[1];
 
-    req.user = decoded;
+        // VERIFY TOKEN
+        const decoded =
+          jwt.verify(
+            token,
+            process.env.JWT_SECRET
+          );
 
-    next();
-  } catch (error) {
-    return res.status(401).json({
-      message: "Token failed",
-    });
-  }
-};
+        // GET USER
+        req.user =
+          await User.findById(
+            decoded.id
+          )
+            .populate(
+              "branch"
+            )
+            .select(
+              "-password"
+            );
 
-module.exports = protect;
+        if (
+          !req.user
+        ) {
+          return res
+            .status(
+              401
+            )
+            .json({
+              message:
+                "User not found",
+            });
+        }
+
+        next();
+      } catch (error) {
+        console.log(
+          error
+        );
+
+        return res
+          .status(
+            401
+          )
+          .json({
+            message:
+              "Not authorized",
+          });
+      }
+    }
+
+    // NO TOKEN
+    if (!token) {
+      return res
+        .status(
+          401
+        )
+        .json({
+          message:
+            "No token provided",
+        });
+    }
+  };
+
+
+// =====================================
+// MANAGER ONLY
+// =====================================
+const managerOnly =
+  (
+    req,
+    res,
+    next
+  ) => {
+    if (
+      req.user &&
+      req.user.role ===
+        "manager"
+    ) {
+      next();
+    } else {
+      res
+        .status(403)
+        .json({
+          message:
+            "Manager access only",
+        });
+    }
+  };
+
+
+// =====================================
+// EXPORTS
+// =====================================
+module.exports =
+  {
+    protect,
+    managerOnly,
+  };
