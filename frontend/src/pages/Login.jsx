@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 import logo from "../assets/Logo.png";
 
 function Login() {
@@ -28,13 +28,13 @@ function Login() {
       setError("");
 
       const { data } =
-        await axios.post(
-          "http://localhost:5000/api/auth/login",
-          {
-            username,
-            password,
-          }
-        );
+  await api.post(
+    "/auth/login",
+    {
+      username,
+      password,
+    }
+  );
 
       localStorage.setItem(
         "token",
