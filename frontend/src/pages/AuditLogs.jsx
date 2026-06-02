@@ -1,3 +1,6 @@
+// AuditLogs.jsx V2.1
+// PART 1 OF 3
+
 import {
   useEffect,
   useMemo,
@@ -75,6 +78,65 @@ const getActionStyle =
     `;
   };
 
+// =========================
+// KAMPALA DATE HELPERS
+// =========================
+const KAMPALA_TIMEZONE =
+  "Africa/Kampala";
+
+const formatDate =
+  (date) =>
+    new Date(
+      date
+    ).toLocaleString(
+      "en-UG",
+      {
+        timeZone:
+          KAMPALA_TIMEZONE,
+
+        year:
+          "numeric",
+
+        month:
+          "short",
+
+        day:
+          "2-digit",
+
+        hour:
+          "2-digit",
+
+        minute:
+          "2-digit",
+
+        second:
+          "2-digit",
+
+        hour12: true,
+      }
+    );
+
+const getKampalaDateKey =
+  (date) =>
+    new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone:
+          KAMPALA_TIMEZONE,
+
+        year:
+          "numeric",
+
+        month:
+          "2-digit",
+
+        day:
+          "2-digit",
+      }
+    ).format(
+      new Date(date)
+    );
+
 function AuditLogs() {
   const [logs, setLogs] =
     useState([]);
@@ -144,6 +206,111 @@ function AuditLogs() {
     };
 
   // =========================
+  // EXPORT CSV
+  // =========================
+  const exportCSV =
+    () => {
+      const rows =
+        filteredLogs.map(
+          (log) => ({
+            Date:
+              formatDate(
+                log.createdAt
+              ),
+
+            User:
+              log.user
+                ?.username ||
+              "-",
+
+            Branch:
+              log.branch
+                ?.name ||
+              "-",
+
+            Action:
+              log.action,
+
+            Entity:
+              log.entityType,
+
+            Description:
+              log.description,
+          })
+        );
+
+      const headers =
+        Object.keys(
+          rows[0] || {}
+        );
+
+      if (
+        !headers.length
+      ) {
+        alert(
+          "No logs available for export."
+        );
+        return;
+      }
+
+      const csv =
+        [
+          headers.join(
+            ","
+          ),
+
+          ...rows.map(
+            (row) =>
+              headers
+                .map(
+                  (
+                    header
+                  ) =>
+                    `"${String(
+                      row[
+                        header
+                      ] || ""
+                    ).replaceAll(
+                      '"',
+                      '""'
+                    )}"`
+                )
+                .join(",")
+          ),
+        ].join("\n");
+
+      const blob =
+        new Blob(
+          [csv],
+          {
+            type:
+              "text/csv;charset=utf-8;",
+          }
+        );
+
+      const link =
+        document.createElement(
+          "a"
+        );
+
+      link.href =
+        URL.createObjectURL(
+          blob
+        );
+
+      link.download =
+        `audit_logs_${
+          new Date()
+            .toISOString()
+            .split(
+              "T"
+            )[0]
+        }.csv`;
+
+      link.click();
+    };
+
+  // =========================
   // CLEAR LOGS
   // =========================
   const clearLogs =
@@ -154,7 +321,7 @@ function AuditLogs() {
         window.confirm(
           period ===
             "all"
-            ? "Delete ALL audit logs?"
+            ? "Delete ALL audit logs permanently?"
             : `Delete logs older than ${period}?`
         );
 
@@ -169,11 +336,21 @@ function AuditLogs() {
           true
         );
 
-        await api.post(
-          "/audits/clear",
-          {
-            period,
-          }
+        const response =
+          await api.post(
+            "/audits/clear",
+            {
+              period,
+            }
+          );
+
+        alert(
+          `${
+            response
+              .data
+              ?.deletedCount ||
+            0
+          } audit logs removed successfully.`
         );
 
         await fetchLogs();
@@ -193,15 +370,6 @@ function AuditLogs() {
         );
       }
     };
-
-  // =========================
-  // DATE FORMAT
-  // =========================
-  const formatDate =
-    (date) =>
-      new Date(
-        date
-      ).toLocaleString();
 
   // =========================
   // UNIQUE BRANCHES
@@ -234,9 +402,6 @@ function AuditLogs() {
       let filtered =
         [...logs];
 
-      // =====================
-      // PERIOD FILTER
-      // =====================
       if (
         periodFilter !==
         "all"
@@ -257,8 +422,12 @@ function AuditLogs() {
                 "today"
               ) {
                 return (
-                  logDate.toDateString() ===
-                  now.toDateString()
+                  getKampalaDateKey(
+                    logDate
+                  ) ===
+                  getKampalaDateKey(
+                    now
+                  )
                 );
               }
 
@@ -279,6 +448,8 @@ function AuditLogs() {
                   sevenDaysAgo
                 );
               }
+              // AuditLogs.jsx V2.1
+// PART 2 OF 3
 
               if (
                 periodFilter ===
@@ -336,7 +507,8 @@ function AuditLogs() {
               branchFilter
           );
       }
-            // =====================
+
+      // =====================
       // SEARCH
       // =====================
       if (
@@ -415,10 +587,12 @@ function AuditLogs() {
     today:
       filteredLogs.filter(
         (log) =>
-          new Date(
+          getKampalaDateKey(
             log.createdAt
-          ).toDateString() ===
-          new Date().toDateString()
+          ) ===
+          getKampalaDateKey(
+            new Date()
+          )
       ).length,
   };
 
@@ -511,6 +685,18 @@ function AuditLogs() {
               System activity
               tracking
             </p>
+
+            <p
+              className="
+                text-xs
+                text-gray-400
+                mt-1
+              "
+            >
+              Audit Times:
+              Africa/Kampala
+              (EAT)
+            </p>
           </div>
 
           <div
@@ -520,6 +706,23 @@ function AuditLogs() {
               gap-2
             "
           >
+            <button
+              onClick={
+                exportCSV
+              }
+              className="
+                px-3
+                py-2
+                text-sm
+                rounded-lg
+                bg-blue-100
+                text-blue-700
+                font-medium
+              "
+            >
+              Export CSV
+            </button>
+
             <button
               onClick={() =>
                 clearLogs(
@@ -585,6 +788,28 @@ function AuditLogs() {
             >
               Clear 1Y
             </button>
+
+            <button
+              onClick={() =>
+                clearLogs(
+                  "all"
+                )
+              }
+              disabled={
+                clearingLogs
+              }
+              className="
+                px-3
+                py-2
+                text-sm
+                rounded-lg
+                bg-[#6b0f1a]
+                text-white
+                font-medium
+              "
+            >
+              Clear All
+            </button>
           </div>
         </div>
       </div>
@@ -600,6 +825,9 @@ function AuditLogs() {
           gap-3
         "
       >
+        // AuditLogs.jsx V2.1
+// PART 3 OF 3
+
         <div
           className="
             bg-white
@@ -719,7 +947,8 @@ function AuditLogs() {
           </h2>
         </div>
       </div>
-            {/* ===================== */}
+
+      {/* ===================== */}
       {/* FILTERS */}
       {/* ===================== */}
       <div
@@ -739,7 +968,6 @@ function AuditLogs() {
             gap-3
           "
         >
-          {/* SEARCH */}
           <input
             type="text"
             placeholder="
@@ -765,7 +993,6 @@ function AuditLogs() {
             "
           />
 
-          {/* ACTION FILTER */}
           <select
             value={
               actionFilter
@@ -811,7 +1038,6 @@ function AuditLogs() {
             </option>
           </select>
 
-          {/* PERIOD FILTER */}
           <select
             value={
               periodFilter
@@ -845,7 +1071,6 @@ function AuditLogs() {
             </option>
           </select>
 
-          {/* BRANCH FILTER */}
           <select
             value={
               branchFilter
@@ -912,69 +1137,27 @@ function AuditLogs() {
               "
             >
               <tr>
-                <th
-                  className="
-                    text-left
-                    p-3
-                    text-xs
-                    uppercase
-                  "
-                >
+                <th className="text-left p-3 text-xs uppercase">
                   Date
                 </th>
 
-                <th
-                  className="
-                    text-left
-                    p-3
-                    text-xs
-                    uppercase
-                  "
-                >
+                <th className="text-left p-3 text-xs uppercase">
                   User
                 </th>
 
-                <th
-                  className="
-                    text-left
-                    p-3
-                    text-xs
-                    uppercase
-                  "
-                >
+                <th className="text-left p-3 text-xs uppercase">
                   Branch
                 </th>
 
-                <th
-                  className="
-                    text-left
-                    p-3
-                    text-xs
-                    uppercase
-                  "
-                >
+                <th className="text-left p-3 text-xs uppercase">
                   Action
                 </th>
 
-                <th
-                  className="
-                    text-left
-                    p-3
-                    text-xs
-                    uppercase
-                  "
-                >
+                <th className="text-left p-3 text-xs uppercase">
                   Entity
                 </th>
 
-                <th
-                  className="
-                    text-left
-                    p-3
-                    text-xs
-                    uppercase
-                  "
-                >
+                <th className="text-left p-3 text-xs uppercase">
                   Description
                 </th>
               </tr>
@@ -1008,45 +1191,25 @@ function AuditLogs() {
                         hover:bg-gray-50
                       "
                     >
-                      <td
-                        className="
-                          p-3
-                          whitespace-nowrap
-                          text-sm
-                        "
-                      >
+                      <td className="p-3 whitespace-nowrap text-sm">
                         {formatDate(
                           log.createdAt
                         )}
                       </td>
 
-                      <td
-                        className="
-                          p-3
-                          text-sm
-                        "
-                      >
+                      <td className="p-3 text-sm">
                         {log.user
                           ?.username ||
                           "-"}
                       </td>
 
-                      <td
-                        className="
-                          p-3
-                          text-sm
-                        "
-                      >
+                      <td className="p-3 text-sm">
                         {log.branch
                           ?.name ||
                           "-"}
                       </td>
 
-                      <td
-                        className="
-                          p-3
-                        "
-                      >
+                      <td className="p-3">
                         <span
                           className={`
                             px-2
@@ -1059,29 +1222,17 @@ function AuditLogs() {
                             )}
                           `}
                         >
-                          {
-                            log.action
-                          }
+                          {log.action}
                         </span>
                       </td>
 
-                      <td
-                        className="
-                          p-3
-                          text-sm
-                        "
-                      >
+                      <td className="p-3 text-sm">
                         {
                           log.entityType
                         }
                       </td>
 
-                      <td
-                        className="
-                          p-3
-                          text-sm
-                        "
-                      >
+                      <td className="p-3 text-sm">
                         {
                           log.description
                         }
@@ -1094,7 +1245,8 @@ function AuditLogs() {
           </table>
         </div>
       </div>
-            {/* ===================== */}
+
+      {/* ===================== */}
       {/* MOBILE CARDS */}
       {/* ===================== */}
       <div
@@ -1170,8 +1322,7 @@ function AuditLogs() {
                         mt-1
                       "
                     >
-                      Branch:
-                      {" "}
+                      Branch:{" "}
                       {log.branch
                         ?.name ||
                         "-"}
@@ -1194,11 +1345,7 @@ function AuditLogs() {
                   </span>
                 </div>
 
-                <div
-                  className="
-                    mt-3
-                  "
-                >
+                <div className="mt-3">
                   <div
                     className="
                       text-xs
@@ -1221,11 +1368,7 @@ function AuditLogs() {
                   </div>
                 </div>
 
-                <div
-                  className="
-                    mt-3
-                  "
-                >
+                <div className="mt-3">
                   <div
                     className="
                       text-xs
@@ -1253,7 +1396,6 @@ function AuditLogs() {
           )
         )}
       </div>
-
     </div>
   );
 }
