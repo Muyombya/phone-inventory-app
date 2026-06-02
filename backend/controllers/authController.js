@@ -182,17 +182,27 @@ const loginUser =
           .status(400)
           .json({
             message:
-              "Invalid credentials",
+               "USER NOT FOUND",
           });
       }
 
       // =====================
       // CHECK PASSWORD
       // =====================
+      console.log(
+                    "USERNAME:",
+                    username
+                  );
+
       const isMatch =
         await user.comparePassword(
           password
         );
+
+      console.log(
+                    "PASSWORD MATCH:",
+                    isMatch
+                  );
 
       if (
         !isMatch
@@ -201,7 +211,7 @@ const loginUser =
           .status(400)
           .json({
             message:
-              "Invalid credentials",
+              "PASSWORD MISMATCH",
           });
       }
 
