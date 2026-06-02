@@ -155,8 +155,8 @@ const loginUser =
       } = req.body;
 
       console.log(
-        "LOGIN ATTEMPT:",
-        username
+        "LOGIN ATTEMPT RAW:",
+  JSON.stringify(username)
       );
 
       // =====================
