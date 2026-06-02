@@ -154,11 +154,6 @@ const loginUser =
         password,
       } = req.body;
 
-      console.log(
-        "LOGIN ATTEMPT RAW:",
-  JSON.stringify(username)
-      );
-
       // =====================
       // FIND USER
       // =====================
@@ -170,39 +165,22 @@ const loginUser =
           "name"
         );
 
-      console.log(
-        "USER FOUND:",
-        user
-          ? user.username
-          : "NO USER"
-      );
-
       if (!user) {
         return res
           .status(400)
           .json({
             message:
-               "USER NOT FOUND",
+              "Invalid credentials",
           });
       }
 
       // =====================
       // CHECK PASSWORD
       // =====================
-      console.log(
-                    "USERNAME:",
-                    username
-                  );
-
       const isMatch =
         await user.comparePassword(
           password
         );
-
-      console.log(
-                    "PASSWORD MATCH:",
-                    isMatch
-                  );
 
       if (
         !isMatch
@@ -211,7 +189,7 @@ const loginUser =
           .status(400)
           .json({
             message:
-              "PASSWORD MISMATCH",
+              "Invalid credentials",
           });
       }
 
