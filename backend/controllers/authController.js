@@ -143,36 +143,33 @@ const registerUser =
 // =========================
 // LOGIN USER
 // =========================
-const loginUser =
-  async (
-    req,
-    res
-  ) => {
-    try {
-      const {
-        username,
-        password,
-      } = req.body;
+// =====================
+// FIND USER
+// =====================
+const {
+  username,
+  password,
+} = req.body;
 
-      // =====================
-      // FIND USER
-      // =====================
-      const user =
-        await User.findOne({
-          username,
-        }).populate(
-          "branch",
-          "name"
-        );
+console.log(
+  "LOGIN ATTEMPT:",
+  username
+);
 
-      if (!user) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Invalid credentials",
-          });
-      }
+const user =
+  await User.findOne({
+    username,
+  }).populate(
+    "branch",
+    "name"
+  );
+
+console.log(
+  "USER FOUND:",
+  user
+    ? user.username
+    : "NO USER"
+);
 
       // =====================
       // CHECK PASSWORD
