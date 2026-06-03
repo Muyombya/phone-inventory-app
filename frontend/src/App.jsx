@@ -39,6 +39,10 @@ import Users from "./pages/Users";
 
 import AuditLogs from "./pages/AuditLogs";
 
+import useSessionTimeout from "./hooks/useSessionTimeout";
+
+import { useCallback } from "react";
+
 // =========================
 // PROTECTED ROUTE
 // =========================
@@ -49,6 +53,25 @@ function ProtectedRoute({
     localStorage.getItem(
       "token"
     );
+
+  const handleTimeout =
+    useCallback(() => {
+      localStorage.removeItem(
+        "token"
+      );
+
+      localStorage.removeItem(
+        "user"
+      );
+
+      window.location.href =
+        "/login";
+    }, []);
+
+  useSessionTimeout(
+    handleTimeout,
+    15
+  );
 
   if (!token) {
     return (

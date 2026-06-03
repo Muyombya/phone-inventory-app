@@ -145,7 +145,7 @@ function Dashboard() {
     <div
       className="
         min-h-screen
-        bg-orange-50
+        bg-white
         p-3
         md:p-5
         space-y-4
@@ -821,17 +821,26 @@ function Dashboard() {
 
           </div>
 
-          {lowStock.length ===
-          0 ? (
-            <div
-              className="
-                text-green-600
-                font-medium
-                text-sm
-              "
-            >
-              Inventory levels are healthy.
-            </div>
+         {summary.inventoryCount === 0 ? (
+  <div
+    className="
+      text-gray-500
+      font-medium
+      text-sm
+    "
+  >
+    No inventory data available.
+  </div>
+) : lowStock.length === 0 ? (
+  <div
+    className="
+      text-green-600
+      font-medium
+      text-sm
+    "
+  >
+    Inventory levels are healthy.
+  </div>
           ) : (
             <div
               className="

@@ -448,9 +448,6 @@ function AuditLogs() {
                   sevenDaysAgo
                 );
               }
-              // AuditLogs.jsx V2.1
-// PART 2 OF 3
-
               if (
                 periodFilter ===
                 "30days"
