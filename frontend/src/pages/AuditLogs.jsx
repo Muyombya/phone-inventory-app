@@ -822,9 +822,6 @@ function AuditLogs() {
           gap-3
         "
       >
-        // AuditLogs.jsx V2.1
-// PART 3 OF 3
-
         <div
           className="
             bg-white
