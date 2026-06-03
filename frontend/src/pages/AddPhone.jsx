@@ -223,42 +223,34 @@ function AddPhone() {
               : "Scan IMEI"}
           </button>
 
-
-
           {/* BARCODE SCANNER */}
-          {scanning && (
-            <div className="mt-4 rounded-lg overflow-hidden border">
-              <BarcodeScanner
-                width={500}
-                height={500}
-                onUpdate={(
-                  err,
-                  result
-                ) => {
-                  if (
-                    result
-                  ) {
-                    setFormData(
-                      (
-                        prev
-                      ) => ({
+            {scanning && (
+              <div className="mt-4 rounded-lg overflow-hidden border">
+                <BarcodeScanner
+                  width={800}
+                  height={800}
+                  constraints={{
+                    facingMode: "environment",
+                  }}
+                  onUpdate={(err, result) => {
+                    if (!result) return;
+
+                    const match =
+                      result.text.match(/\d{15}/);
+
+                    if (match) {
+                      setFormData((prev) => ({
                         ...prev,
-                        imei:
-                          result.text,
-                      })
-                    );
+                        imei: match[0],
+                      }));
 
-                    setScanning(
-                      false
-                    );
-                  }
-                }}
-              />
-            </div>
-          )}
+                      setScanning(false);
+                    }
+                  }}
+                />
+              </div>
+            )}
         </div>
-
-
 
         {/* BUYING PRICE */}
         <div>
