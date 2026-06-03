@@ -3,11 +3,10 @@ import {
   useState,
 } from "react";
 
-import BarcodeScanner from "react-qr-barcode-scanner";
+import { useEffect, useState, useRef } from "react";
+import { Html5QrcodeScanner } from "html5-qrcode";
 
 import api from "../services/api";
-
-
 
 function AddPhone() {
   const [formData, setFormData] =
@@ -27,10 +26,7 @@ function AddPhone() {
   const [loading, setLoading] =
     useState(false);
 
-  const [scanning, setScanning] =
-    useState(false);
-
-
+    const scannerRef = useRef(null);
 
   // =========================
   // FETCH BRANCHES
@@ -53,13 +49,54 @@ function AddPhone() {
     }
   }
 
-
-
   useEffect(() => {
     fetchBranches();
   }, []);
 
+    useEffect(() => {
+  if (!scanning) return;
 
+  const scanner = new Html5QrcodeScanner(
+    "imei-reader",
+    {
+      fps: 10,
+      qrbox: 250,
+      rememberLastUsedCamera: true,
+    },
+    false
+  );
+
+  scannerRef.current = scanner;
+
+  scanner.render(
+    (decodedText) => {
+      const match =
+        decodedText.match(/\d{15}/);
+
+      if (match) {
+        setFormData((prev) => ({
+          ...prev,
+          imei: match[0],
+        }));
+
+        scanner
+          .clear()
+          .catch(() => {});
+
+        setScanning(false);
+      }
+    },
+    () => {
+      // Ignore scan errors
+    }
+  );
+
+  return () => {
+    scanner
+      .clear()
+      .catch(() => {});
+  };
+}, [scanning]);
 
   // =========================
   // HANDLE INPUT CHANGE
@@ -224,29 +261,12 @@ function AddPhone() {
           </button>
 
           {/* BARCODE SCANNER */}
+           {/* IMEI SCANNER */}
             {scanning && (
-              <div className="mt-4 rounded-lg overflow-hidden border">
-                <BarcodeScanner
-                  width={800}
-                  height={800}
-                  constraints={{
-                    facingMode: "environment",
-                  }}
-                  onUpdate={(err, result) => {
-                    if (!result) return;
-
-                    const match =
-                      result.text.match(/\d{15}/);
-
-                    if (match) {
-                      setFormData((prev) => ({
-                        ...prev,
-                        imei: match[0],
-                      }));
-
-                      setScanning(false);
-                    }
-                  }}
+              <div className="mt-4 rounded-lg overflow-hidden border p-2">
+                <div
+                  id="imei-reader"
+                  className="w-full"
                 />
               </div>
             )}
