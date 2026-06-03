@@ -60,7 +60,7 @@ function AddPhone() {
     "imei-reader",
     {
       fps: 10,
-      qrbox: 250,
+      qrbox: 350,
       rememberLastUsedCamera: true,
     },
     false
