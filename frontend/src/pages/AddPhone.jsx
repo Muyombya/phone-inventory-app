@@ -1,12 +1,11 @@
+
 import {
   useEffect,
   useState,
 } from "react";
 
-import { useEffect, useState, useRef } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
-
 import api from "../services/api";
+import BarcodeScanner from "../components/BarcodeScanner";
 
 function AddPhone() {
   const [formData, setFormData] =
@@ -26,7 +25,8 @@ function AddPhone() {
   const [loading, setLoading] =
     useState(false);
 
-    const scannerRef = useRef(null);
+  const [scanning, setScanning] =
+    useState(false);
 
   // =========================
   // FETCH BRANCHES
@@ -53,51 +53,6 @@ function AddPhone() {
     fetchBranches();
   }, []);
 
-    useEffect(() => {
-  if (!scanning) return;
-
-  const scanner = new Html5QrcodeScanner(
-    "imei-reader",
-    {
-      fps: 10,
-      qrbox: 350,
-      rememberLastUsedCamera: true,
-    },
-    false
-  );
-
-  scannerRef.current = scanner;
-
-  scanner.render(
-    (decodedText) => {
-      const match =
-        decodedText.match(/\d{15}/);
-
-      if (match) {
-        setFormData((prev) => ({
-          ...prev,
-          imei: match[0],
-        }));
-
-        scanner
-          .clear()
-          .catch(() => {});
-
-        setScanning(false);
-      }
-    },
-    () => {
-      // Ignore scan errors
-    }
-  );
-
-  return () => {
-    scanner
-      .clear()
-      .catch(() => {});
-  };
-}, [scanning]);
-
   // =========================
   // HANDLE INPUT CHANGE
   // =========================
@@ -108,8 +63,6 @@ function AddPhone() {
         e.target.value,
     });
   }
-
-
 
   // =========================
   // HANDLE SUBMIT
@@ -153,8 +106,6 @@ function AddPhone() {
     }
   }
 
-
-
   return (
     <div className="p-5 max-w-3xl mx-auto">
       {/* HEADER */}
@@ -167,8 +118,6 @@ function AddPhone() {
           Register new stock into inventory.
         </p>
       </div>
-
-
 
       {/* FORM */}
       <form
@@ -198,8 +147,6 @@ function AddPhone() {
           />
         </div>
 
-
-
         {/* MODEL */}
         <div>
           <label className="block font-medium mb-2">
@@ -221,8 +168,6 @@ function AddPhone() {
           />
         </div>
 
-
-
         {/* IMEI */}
         <div>
           <label className="block font-medium mb-2">
@@ -243,8 +188,6 @@ function AddPhone() {
             required
           />
 
-
-
           {/* SCANNER BUTTON */}
           <button
             type="button"
@@ -260,16 +203,28 @@ function AddPhone() {
               : "Scan IMEI"}
           </button>
 
-          {/* BARCODE SCANNER */}
-           {/* IMEI SCANNER */}
-            {scanning && (
-              <div className="mt-4 rounded-lg overflow-hidden border p-2">
-                <div
-                  id="imei-reader"
-                  className="w-full"
-                />
-              </div>
-            )}
+          {/* OCR SCANNER */}
+          {scanning && (
+            <BarcodeScanner
+              onScanSuccess={(
+                selectedImei
+              ) => {
+                setFormData(
+                  (
+                    prev
+                  ) => ({
+                    ...prev,
+                    imei:
+                      selectedImei,
+                  })
+                );
+
+                setScanning(
+                  false
+                );
+              }}
+            />
+          )}
         </div>
 
         {/* BUYING PRICE */}
@@ -293,8 +248,6 @@ function AddPhone() {
           />
         </div>
 
-
-
         {/* SELLING PRICE */}
         <div>
           <label className="block font-medium mb-2">
@@ -316,8 +269,6 @@ function AddPhone() {
           />
         </div>
 
-
-
         {/* QUANTITY */}
         <div>
           <label className="block font-medium mb-2">
@@ -338,8 +289,6 @@ function AddPhone() {
             required
           />
         </div>
-
-
 
         {/* BRANCH */}
         <div>
@@ -379,8 +328,6 @@ function AddPhone() {
           </select>
         </div>
 
-
-
         {/* TIMESTAMP INFO */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-800">
@@ -402,8 +349,6 @@ function AddPhone() {
           </ul>
         </div>
 
-
-
         {/* SUBMIT */}
         <button
           type="submit"
@@ -418,7 +363,5 @@ function AddPhone() {
     </div>
   );
 }
-
-
 
 export default AddPhone;
