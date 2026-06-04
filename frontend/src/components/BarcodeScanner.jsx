@@ -29,11 +29,7 @@ const BarcodeScanner = ({
         file,
         "eng"
       );
-
-      console.log(
-            "OCR RESULT:",
-            text
-          );
+alert(text);
 
       const matches =
         text.match(/\d{15}/g) || [];
