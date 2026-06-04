@@ -124,13 +124,16 @@ const addPhone =
   async (req, res) => {
     try {
       const {
-        brand,
-        model,
-        imei,
-        buyingPrice,
-        sellingPrice,
-        branch,
-      } = req.body;
+              brand,
+              model,
+              imei,
+              storage,
+              ram,
+              color,
+              buyingPrice,
+              sellingPrice,
+              branch,
+            } = req.body;
 
       const existingPhone =
         await Phone.findOne(
@@ -163,19 +166,21 @@ const addPhone =
 
       const phone =
         await Phone.create(
-          {
-            brand,
-            model,
-            imei,
-            buyingPrice,
-            sellingPrice,
-            branch:
-              assignedBranch,
-            addedBy:
-              req.user.id,
+              {
+                brand,
+                model,
+                imei,
+                storage,
+                ram,
+                color,
+                buyingPrice,
+                sellingPrice,
+                branch:
+                  assignedBranch,
+                addedBy:
+                  req.user.id,
           }
-        );
-
+  );
       // =========================
       // AUDIT LOG
       // =========================
@@ -280,6 +285,18 @@ const updatePhone =
         req.body
           .sellingPrice ||
         phone.sellingPrice;
+
+      phone.storage =
+        req.body.storage ||
+        phone.storage;
+
+      phone.ram =
+        req.body.ram ||
+        phone.ram;
+
+      phone.color =
+        req.body.color ||
+        phone.color;
 
       if (
         req.user.role ===

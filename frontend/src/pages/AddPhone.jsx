@@ -13,9 +13,11 @@ function AddPhone() {
       brand: "",
       model: "",
       imei: "",
+      storage: "",
+      ram: "",
+      color: "",
       buyingPrice: "",
       sellingPrice: "",
-      quantity: 1,
       branch: "",
     });
 
@@ -88,9 +90,11 @@ function AddPhone() {
         brand: "",
         model: "",
         imei: "",
+        storage: "",
+        ram: "",
+        color: "",
         buyingPrice: "",
         sellingPrice: "",
-        quantity: 1,
         branch: "",
       });
     } catch (error) {
@@ -115,7 +119,8 @@ function AddPhone() {
         </h1>
 
         <p className="text-gray-600 mt-2">
-          Register new stock into inventory.
+          Register new stock into
+          inventory.
         </p>
       </div>
 
@@ -135,7 +140,7 @@ function AddPhone() {
           <input
             type="text"
             name="brand"
-            placeholder="Example: Nokia"
+            placeholder="Example: Samsung"
             value={
               formData.brand
             }
@@ -156,7 +161,7 @@ function AddPhone() {
           <input
             type="text"
             name="model"
-            placeholder="Example: Nokia 125"
+            placeholder="Example: Galaxy A16"
             value={
               formData.model
             }
@@ -188,7 +193,6 @@ function AddPhone() {
             required
           />
 
-          {/* SCANNER BUTTON */}
           <button
             type="button"
             onClick={() =>
@@ -203,7 +207,6 @@ function AddPhone() {
               : "Scan IMEI"}
           </button>
 
-          {/* OCR SCANNER */}
           {scanning && (
             <BarcodeScanner
               onScanSuccess={(
@@ -227,6 +230,125 @@ function AddPhone() {
           )}
         </div>
 
+        {/* STORAGE */}
+        <div>
+          <label className="block font-medium mb-2">
+            Storage
+          </label>
+
+          <select
+            name="storage"
+            value={
+              formData.storage
+            }
+            onChange={
+              handleChange
+            }
+            className="border rounded-lg p-4 w-full"
+            required
+          >
+            <option value="">
+              Select Storage
+            </option>
+
+            <option value="32GB">
+              32GB
+            </option>
+
+            <option value="64GB">
+              64GB
+            </option>
+
+            <option value="128GB">
+              128GB
+            </option>
+
+            <option value="256GB">
+              256GB
+            </option>
+
+            <option value="512GB">
+              512GB
+            </option>
+
+            <option value="1TB">
+              1TB
+            </option>
+          </select>
+        </div>
+
+        {/* RAM */}
+        <div>
+          <label className="block font-medium mb-2">
+            RAM
+          </label>
+
+          <select
+            name="ram"
+            value={
+              formData.ram
+            }
+            onChange={
+              handleChange
+            }
+            className="border rounded-lg p-4 w-full"
+            required
+          >
+            <option value="">
+              Select RAM
+            </option>
+
+            <option value="2GB">
+              2GB
+            </option>
+
+            <option value="3GB">
+              3GB
+            </option>
+
+            <option value="4GB">
+              4GB
+            </option>
+
+            <option value="6GB">
+              6GB
+            </option>
+
+            <option value="8GB">
+              8GB
+            </option>
+
+            <option value="12GB">
+              12GB
+            </option>
+
+            <option value="16GB">
+              16GB
+            </option>
+          </select>
+        </div>
+
+        {/* COLOUR */}
+        <div>
+          <label className="block font-medium mb-2">
+            Colour
+          </label>
+
+          <input
+            type="text"
+            name="color"
+            placeholder="Example: Black"
+            value={
+              formData.color
+            }
+            onChange={
+              handleChange
+            }
+            className="border rounded-lg p-4 w-full"
+            required
+          />
+        </div>
+
         {/* BUYING PRICE */}
         <div>
           <label className="block font-medium mb-2">
@@ -236,7 +358,6 @@ function AddPhone() {
           <input
             type="number"
             name="buyingPrice"
-            placeholder="Buying Price"
             value={
               formData.buyingPrice
             }
@@ -257,30 +378,8 @@ function AddPhone() {
           <input
             type="number"
             name="sellingPrice"
-            placeholder="Selling Price"
             value={
               formData.sellingPrice
-            }
-            onChange={
-              handleChange
-            }
-            className="border rounded-lg p-4 w-full"
-            required
-          />
-        </div>
-
-        {/* QUANTITY */}
-        <div>
-          <label className="block font-medium mb-2">
-            Quantity
-          </label>
-
-          <input
-            type="number"
-            name="quantity"
-            min="1"
-            value={
-              formData.quantity
             }
             onChange={
               handleChange
@@ -328,10 +427,12 @@ function AddPhone() {
           </select>
         </div>
 
-        {/* TIMESTAMP INFO */}
+        {/* INFO */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-800">
-            Phones added here are automatically timestamped with:
+            Phones added here are
+            automatically timestamped
+            with:
           </p>
 
           <ul className="list-disc ml-5 mt-2 text-sm text-blue-700">

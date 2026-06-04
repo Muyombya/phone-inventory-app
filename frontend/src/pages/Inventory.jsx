@@ -1,3 +1,4 @@
+
 import {
   useEffect,
   useState,
@@ -119,16 +120,37 @@ function Inventory() {
             .includes(
               query
             ) ||
+
           phone.model
             ?.toLowerCase()
             .includes(
               query
             ) ||
+
+          phone.storage
+            ?.toLowerCase()
+            .includes(
+              query
+            ) ||
+
+          phone.ram
+            ?.toLowerCase()
+            .includes(
+              query
+            ) ||
+
+          phone.color
+            ?.toLowerCase()
+            .includes(
+              query
+            ) ||
+
           phone.imei
             ?.toLowerCase()
             .includes(
               query
             ) ||
+
           phone.branch?.name
             ?.toLowerCase()
             .includes(
@@ -189,10 +211,8 @@ function Inventory() {
         stockMap[key] = {
           brand:
             phone.brand,
-
           model:
             phone.model,
-
           count: 0,
         };
       }
@@ -236,6 +256,15 @@ function Inventory() {
 
           Model:
             phone.model,
+
+          Storage:
+            phone.storage,
+
+          RAM:
+            phone.ram,
+
+          Colour:
+            phone.color,
 
           IMEI:
             phone.imei,
@@ -302,7 +331,6 @@ function Inventory() {
       "Inventory.xlsx"
     );
   }
-
   // =========================
   // PRINT
   // =========================
@@ -467,7 +495,7 @@ function Inventory() {
 
         <input
           type="text"
-          placeholder="Search by brand, model, IMEI or branch..."
+          placeholder="Search brand, model, storage, RAM, colour, IMEI or branch..."
           value={search}
           onChange={(
             e
@@ -480,7 +508,8 @@ function Inventory() {
         />
 
       </div>
-            {/* TABLE */}
+
+      {/* TABLE */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
 
         <div className="overflow-x-auto">
@@ -500,6 +529,18 @@ function Inventory() {
                 </th>
 
                 <th className="px-3 py-2 text-left text-sm">
+                  Storage
+                </th>
+
+                <th className="px-3 py-2 text-left text-sm">
+                  RAM
+                </th>
+
+                <th className="px-3 py-2 text-left text-sm">
+                  Colour
+                </th>
+
+                <th className="px-3 py-2 text-left text-sm">
                   IMEI
                 </th>
 
@@ -507,7 +548,6 @@ function Inventory() {
                   Branch
                 </th>
 
-                {/* MANAGER ONLY */}
                 {isManager && (
                   <th className="px-3 py-2 text-left text-sm">
                     Buying Price
@@ -518,7 +558,6 @@ function Inventory() {
                   Selling Price
                 </th>
 
-                {/* MANAGER ONLY */}
                 {isManager && (
                   <th className="px-3 py-2 text-left text-sm">
                     Profit
@@ -529,7 +568,6 @@ function Inventory() {
                   Added
                 </th>
 
-                {/* MANAGER ONLY */}
                 {isManager && (
                   <th className="px-3 py-2 text-left text-sm">
                     Actions
@@ -572,6 +610,24 @@ function Inventory() {
                         }
                       </td>
 
+                      <td className="px-3 py-2">
+                        {
+                          phone.storage
+                        }
+                      </td>
+
+                      <td className="px-3 py-2">
+                        {
+                          phone.ram
+                        }
+                      </td>
+
+                      <td className="px-3 py-2">
+                        {
+                          phone.color
+                        }
+                      </td>
+
                       <td className="px-3 py-2 text-sm">
                         {
                           phone.imei
@@ -585,7 +641,6 @@ function Inventory() {
                           "N/A"}
                       </td>
 
-                      {/* MANAGER ONLY */}
                       {isManager && (
                         <td className="px-3 py-2">
                           UGX{" "}
@@ -602,7 +657,6 @@ function Inventory() {
                         ).toLocaleString()}
                       </td>
 
-                      {/* MANAGER ONLY */}
                       {isManager && (
                         <td className="px-3 py-2 text-green-600 font-semibold">
                           UGX{" "}
@@ -616,7 +670,6 @@ function Inventory() {
                         ).toLocaleDateString()}
                       </td>
 
-                      {/* MANAGER ONLY */}
                       {isManager && (
                         <td className="px-3 py-2">
 
@@ -657,8 +710,8 @@ function Inventory() {
                   <td
                     colSpan={
                       isManager
-                        ? 9
-                        : 5
+                        ? 12
+                        : 8
                     }
                     className="p-8 text-center text-gray-500"
                   >

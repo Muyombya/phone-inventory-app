@@ -1,3 +1,4 @@
+
 const mongoose =
   require("mongoose");
 
@@ -20,6 +21,21 @@ const phoneSchema =
         unique: true,
       },
 
+      storage: {
+        type: String,
+        required: true,
+      },
+
+      ram: {
+        type: String,
+        required: true,
+      },
+
+      color: {
+        type: String,
+        required: true,
+      },
+
       buyingPrice: {
         type: Number,
         required: true,
@@ -33,18 +49,14 @@ const phoneSchema =
       branch: {
         type:
           mongoose.Schema.Types.ObjectId,
-
         ref: "Branch",
-
         required: true,
       },
 
       addedBy: {
         type:
           mongoose.Schema.Types.ObjectId,
-
         ref: "User",
-
         required: true,
       },
 
@@ -72,3 +84,4 @@ module.exports =
     "Phone",
     phoneSchema
   );
+
