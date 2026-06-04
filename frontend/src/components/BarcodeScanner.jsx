@@ -54,21 +54,19 @@ const BarcodeScanner = ({
           "2d"
         );
 
-      const roiWidth =
-        image.width / 2;
+    const roiWidth =
+  image.width * 0.8;
 
-      const roiHeight =
-        image.height / 6;
+const roiHeight =
+  image.height * 0.12;
 
-      const left =
-        (image.width -
-          roiWidth) /
-        2;
+const left =
+  (image.width -
+    roiWidth) /
+  2;
 
-      const top =
-        (image.height -
-          roiHeight) /
-        2;
+const top =
+  image.height * 0.58;
 
       canvas.width =
         roiWidth;
