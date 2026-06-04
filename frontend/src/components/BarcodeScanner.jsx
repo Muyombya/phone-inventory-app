@@ -8,6 +8,9 @@ const BarcodeScanner = ({
   const [loading, setLoading] =
     useState(false);
 
+  const [ocrText, setOcrText] =
+    useState("");
+
   const [detectedImeis, setDetectedImeis] =
     useState([]);
 
@@ -21,25 +24,112 @@ const BarcodeScanner = ({
 
     setLoading(true);
     setDetectedImeis([]);
+    setOcrText("");
 
     try {
+      const imageUrl =
+        URL.createObjectURL(
+          file
+        );
+
+      const image =
+        new Image();
+
+      image.src = imageUrl;
+
+      await new Promise(
+        (resolve) => {
+          image.onload =
+            resolve;
+        }
+      );
+
+      const canvas =
+        document.createElement(
+          "canvas"
+        );
+
+      const ctx =
+        canvas.getContext(
+          "2d"
+        );
+
+      const roiWidth =
+        image.width / 2;
+
+      const roiHeight =
+        image.height / 6;
+
+      const left =
+        (image.width -
+          roiWidth) /
+        2;
+
+      const top =
+        (image.height -
+          roiHeight) /
+        2;
+
+      canvas.width =
+        roiWidth;
+
+      canvas.height =
+        roiHeight;
+
+      ctx.drawImage(
+        image,
+        left,
+        top,
+        roiWidth,
+        roiHeight,
+        0,
+        0,
+        roiWidth,
+        roiHeight
+      );
+
       const {
         data: { text },
-      } = await Tesseract.recognize(
-        file,
-        "eng"
-      );
-alert(text);
+      } =
+        await Tesseract.recognize(
+          canvas,
+          "eng"
+        );
+
+      setOcrText(text);
+
+      const cleanedText =
+        text
+          .replace(
+            /O/g,
+            "0"
+          )
+          .replace(
+            /I/g,
+            "1"
+          )
+          .replace(
+            /S/g,
+            "5"
+          );
 
       const matches =
-        text.match(/\d{15}/g) || [];
+        cleanedText.match(
+          /\d{15}/g
+        ) || [];
 
       const uniqueImeis = [
-        ...new Set(matches),
+        ...new Set(
+          matches
+        ),
       ];
 
       setDetectedImeis(
         uniqueImeis
+      );
+
+      URL.revokeObjectURL(
+        imageUrl
       );
     } catch (error) {
       console.error(
@@ -63,8 +153,12 @@ alert(text);
         </p>
 
         <p className="text-sm text-gray-600 mt-1">
-          Take a photo of the phone
-          box label showing the IMEI.
+          Take a photo of the
+          phone box label and
+          ensure the IMEI
+          sticker is roughly in
+          the center of the
+          image.
         </p>
       </div>
 
@@ -115,9 +209,24 @@ alert(text);
 
       {!loading &&
         detectedImeis.length ===
-          0 && (
+          0 &&
+        ocrText && (
+          <div className="mt-4 border border-yellow-300 bg-yellow-50 rounded-lg p-3">
+            <h3 className="font-semibold mb-2">
+              OCR Debug Output
+            </h3>
+
+            <pre className="text-xs whitespace-pre-wrap">
+              {ocrText}
+            </pre>
+          </div>
+        )}
+
+      {!loading &&
+        !ocrText && (
           <div className="mt-3 text-sm text-gray-500">
-            No IMEI detected yet.
+            No IMEI detected
+            yet.
           </div>
         )}
     </div>
