@@ -163,19 +163,25 @@ function Inventory() {
   // =========================
   // ANALYTICS
   // =========================
+  const totalInventoryValue =
+  filteredPhones.reduce(
+    (sum, phone) =>
+      sum +
+      Number(
+        phone.sellingPrice || 0
+      ),
+    0
+  );
+
   const totalBuyingValue =
-    filteredPhones.reduce(
-      (
-        sum,
-        phone
-      ) =>
-        sum +
-        Number(
-          phone.buyingPrice ||
-            0
-        ),
-      0
-    );
+  filteredPhones.reduce(
+    (sum, phone) =>
+      sum +
+      Number(
+        phone.buyingPrice || 0
+      ),
+    0
+  );
 
   const totalSellingValue =
     filteredPhones.reduce(
@@ -282,10 +288,10 @@ function Inventory() {
 
             Profit:
               Number(
-                phone.sellingPrice
+                phone.sellingPrice || 0
               ) -
               Number(
-                phone.buyingPrice
+                phone.buyingPrice || 0
               ),
           }),
         })
@@ -408,7 +414,7 @@ function Inventory() {
 
             <h2 className="text-lg font-black mt-1">
               UGX{" "}
-              {totalBuyingValue.toLocaleString()}
+              {totalInventoryValue.toLocaleString()}
             </h2>
           </div>
         )}
