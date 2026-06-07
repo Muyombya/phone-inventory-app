@@ -251,6 +251,18 @@ function AddPhone() {
               Select Storage
             </option>
 
+            <option value="128MB">
+              128MB
+            </option>
+
+            <option value="4GB">
+              4GB
+            </option>
+
+            <option value="8GB">
+              8GB
+            </option>
+
             <option value="32GB">
               32GB
             </option>
@@ -296,6 +308,22 @@ function AddPhone() {
           >
             <option value="">
               Select RAM
+            </option>
+
+             <option value="48MB">
+              48MB
+            </option>
+
+            <option value="64MB">
+              64MB
+            </option>
+
+            <option value="512MB">
+              512MB
+            </option>
+
+            <option value="1GB">
+              1GB
             </option>
 
             <option value="2GB">
