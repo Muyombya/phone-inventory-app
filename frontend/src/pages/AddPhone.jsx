@@ -392,8 +392,8 @@ function AddPhone() {
             onChange={
               handleChange
             }
+            placeholder="Optional"
             className="border rounded-lg p-4 w-full"
-            required
           />
         </div>
 

@@ -367,7 +367,7 @@ const EditPhone = () => {
               handleChange
             }
             className="border rounded-lg p-4 w-full"
-            required
+            placeholder="Optional"
           />
         </div>
 
