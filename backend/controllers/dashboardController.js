@@ -43,18 +43,18 @@ const getDashboardData =
         phones.length;
 
       const stockValue =
-        phones.reduce(
-          (
-            total,
-            phone
-          ) =>
-            total +
-            Number(
-              phone.buyingPrice ||
-                0
-            ),
-          0
-        );
+          phones.reduce(
+            (
+              total,
+              phone
+            ) =>
+              total +
+              Number(
+                phone.sellingPrice ||
+                  0
+              ),
+            0
+          );
 
       // =========================
       // LOAD SALES
