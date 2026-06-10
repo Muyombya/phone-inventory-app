@@ -1,4 +1,6 @@
 import {
+  useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -18,6 +20,14 @@ function Navbar() {
     setMobileMenuOpen,
   ] = useState(false);
 
+  const [
+    moreMenuOpen,
+    setMoreMenuOpen,
+  ] = useState(false);
+
+  const moreMenuRef =
+    useRef(null);
+
   // =========================
   // USER
   // =========================
@@ -31,6 +41,37 @@ function Navbar() {
   const isManager =
     user?.role ===
     "manager";
+
+  // =========================
+  // CLOSE MORE MENU
+  // =========================
+  useEffect(() => {
+    function handleClickOutside(
+      event
+    ) {
+      if (
+        moreMenuRef.current &&
+        !moreMenuRef.current.contains(
+          event.target
+        )
+      ) {
+        setMoreMenuOpen(
+          false
+        );
+      }
+    }
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    return () =>
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+  }, []);
 
   // =========================
   // LOGOUT
@@ -86,7 +127,6 @@ function Navbar() {
         shadow-xl
       "
     >
-
       <div
         className="
           max-w-7xl
@@ -94,7 +134,6 @@ function Navbar() {
           px-4
         "
       >
-
         {/* TOP BAR */}
         <div
           className="
@@ -104,8 +143,7 @@ function Navbar() {
             py-4
           "
         >
-
-          {/* LOGO ONLY */}
+          {/* LOGO */}
           <Link
             to="/dashboard"
             className="
@@ -113,7 +151,6 @@ function Navbar() {
               items-center
             "
           >
-
             <img
               src={Logo}
               alt="Gadget Shop"
@@ -123,7 +160,6 @@ function Navbar() {
                 object-contain
               "
             />
-
           </Link>
 
           {/* MOBILE BUTTON */}
@@ -152,10 +188,9 @@ function Navbar() {
               hidden
               lg:flex
               items-center
-              gap-4
+              gap-3
             "
           >
-
             {/* DASHBOARD */}
             <Link
               to="/dashboard"
@@ -185,175 +220,52 @@ function Navbar() {
             >
               Inventory
             </Link>
-
-            {/* SALES */}
-            <div
+                        {/* SALES TERMINAL */}
+            <Link
+              to="/sales-terminal"
               className="
-                relative
-                group
+                px-4
+                py-2
+                rounded-full
+                hover:bg-orange-600
+                transition
+                font-semibold
               "
             >
+              Sales Terminal
+            </Link>
 
-              <button
-                className="
-                  px-4
-                  py-2
-                  rounded-full
-                  hover:bg-orange-600
-                  transition
-                  font-semibold
-                "
-              >
-                Sales ▾
-              </button>
+            {/* SALES HISTORY */}
+            <Link
+              to="/sales-history"
+              className="
+                px-4
+                py-2
+                rounded-full
+                hover:bg-orange-600
+                transition
+                font-semibold
+              "
+            >
+              Sales History
+            </Link>
 
-              <div
-                className="
-                  absolute
-                  left-0
-                  top-full
-                  pt-2
-                  opacity-0
-                  invisible
-                  group-hover:opacity-100
-                  group-hover:visible
-                  transition-all
-                "
-              >
+            {/* RETURNS */}
+            <Link
+              to="/returns"
+              className="
+                px-4
+                py-2
+                rounded-full
+                hover:bg-orange-600
+                transition
+                font-semibold
+              "
+            >
+              Returns
+            </Link>
 
-                <div
-                  className="
-                      bg-orange-800
-                      text-white
-                      rounded-2xl
-                      shadow-2xl
-                      overflow-hidden
-                      min-w-[240px]
-                      border
-                      border-orange-600
-                    "
-                >
-
-                  <Link
-                    to="/sales-terminal"
-                    className="
-                      block
-                      px-5
-                      py-4
-                      hover:bg-orange-700
-                    "
-                  >
-                    Sales Terminal
-                  </Link>
-
-                  <Link
-                    to="/sales-history"
-                    className="
-                      block
-                      px-5
-                      py-4
-                      hover:bg-orange-700
-                    "
-                  >
-                    Sales History
-                  </Link>
-
-                  <Link
-                    to="/returns"
-                    className="
-                      block
-                      px-5
-                      py-4
-                      hover:bg-orange-700
-                    "
-                  >
-                    Returns
-                  </Link>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            {/* TRANSFERS */}
-            {isManager && (
-              <div
-                className="
-                  relative
-                  group
-                "
-              >
-
-                <button
-                  className="
-                    px-4
-                    py-2
-                    rounded-full
-                    hover:bg-orange-600
-                    transition
-                    font-semibold
-                  "
-                >
-                  Transfers ▾
-                </button>
-
-                <div
-                  className="
-                    absolute
-                    left-0
-                    top-full
-                    pt-2
-                    opacity-0
-                    invisible
-                    group-hover:opacity-100
-                    group-hover:visible
-                    transition-all
-                  "
-                >
-                  <div
-                    className="
-                      bg-orange-800
-                      text-white
-                      rounded-2xl
-                      shadow-2xl
-                      overflow-hidden
-                      min-w-[240px]
-                      border
-                      border-orange-600
-                    ">
-                  
-                    <Link
-                      to="/transfers"
-                      className="
-                        block
-                        px-5
-                        py-4
-                        hover:bg-orange-700
-                      "
-                    >
-                      Transfer Phones
-                    </Link>
-
-                    <Link
-                      to="/transfer-history"
-                      className="
-                        block
-                        px-5
-                        py-4
-                        hover:bg-orange-700
-                      "
-                    >
-                      Transfer History
-                    </Link>
-
-                  </div>
-
-                </div>
-
-              </div>
-            )}
-                        {/* REPORTS */}
+            {/* REPORTS */}
             <Link
               to="/reports"
               className="
@@ -368,16 +280,37 @@ function Navbar() {
               Reports
             </Link>
 
-            {/* MANAGE */}
+            {/* ADD PHONE */}
             {isManager && (
-              <div
+              <Link
+                to="/add-phone"
                 className="
-                  relative
-                  group
+                  px-4
+                  py-2
+                  rounded-full
+                  hover:bg-orange-600
+                  transition
+                  font-semibold
                 "
               >
+                Add Phone
+              </Link>
+            )}
 
+            {/* MORE MENU */}
+            {isManager && (
+              <div
+                ref={moreMenuRef}
+                className="
+                  relative
+                "
+              >
                 <button
+                  onClick={() =>
+                    setMoreMenuOpen(
+                      !moreMenuOpen
+                    )
+                  }
                   className="
                     px-4
                     py-2
@@ -387,92 +320,96 @@ function Navbar() {
                     font-semibold
                   "
                 >
-                  Manage ▾
+                  More ▾
                 </button>
 
-                <div
-                  className="
-                    absolute
-                    right-0
-                    top-full
-                    pt-2
-                    opacity-0
-                    invisible
-                    group-hover:opacity-100
-                    group-hover:visible
-                    transition-all
-                  "
-                >
-
+                {moreMenuOpen && (
                   <div
                     className="
-                      bg-orange-800
-                      text-white
-                      rounded-2xl
-                      shadow-2xl
-                      overflow-hidden
-                      min-w-[240px]
-                      border
-                      border-orange-600
+                      absolute
+                      right-0
+                      top-full
+                      pt-2
+                      z-50
                     "
                   >
-
-                    <Link
-                      to="/add-phone"
+                    <div
                       className="
-                        block
-                        px-5
-                        py-4
-                        hover:bg-orange-700
+                        bg-orange-800
+                        text-white
+                        rounded-2xl
+                        shadow-2xl
+                        overflow-hidden
+                        min-w-[260px]
+                        border
+                        border-orange-600
                       "
                     >
-                      Add Phone
-                    </Link>
+                      <Link
+                        to="/transfers"
+                        className="
+                          block
+                          px-5
+                          py-4
+                          hover:bg-orange-700
+                        "
+                      >
+                        Transfer Phones
+                      </Link>
 
-                    <Link
-                      to="/branches"
-                      className="
-                        block
-                        px-5
-                        py-4
-                        hover:bg-orange-700
-                      "
-                    >
-                      Branches
-                    </Link>
+                      <Link
+                        to="/transfer-history"
+                        className="
+                          block
+                          px-5
+                          py-4
+                          hover:bg-orange-700
+                        "
+                      >
+                        Transfer History
+                      </Link>
 
-                    <Link
-                      to="/users"
-                      className="
-                        block
-                        px-5
-                        py-4
-                        hover:bg-orange-700
-                      "
-                    >
-                      Users
-                    </Link>
+                      <Link
+                        to="/branches"
+                        className="
+                          block
+                          px-5
+                          py-4
+                          hover:bg-orange-700
+                        "
+                      >
+                        Branches
+                      </Link>
 
-                    <Link
-                      to="/audit-logs"
-                      className="
-                        block
-                        px-5
-                        py-4
-                        hover:bg-orange-700
-                      "
-                    >
-                      Audit Logs
-                    </Link>
+                      <Link
+                        to="/users"
+                        className="
+                          block
+                          px-5
+                          py-4
+                          hover:bg-orange-700
+                        "
+                      >
+                        Users
+                      </Link>
 
+                      <Link
+                        to="/audit-logs"
+                        className="
+                          block
+                          px-5
+                          py-4
+                          hover:bg-orange-700
+                        "
+                      >
+                        Audit Logs
+                      </Link>
+                    </div>
                   </div>
-
-                </div>
-
+                )}
               </div>
             )}
-
-            {/* USER */}
+                        {/* USER */}
             <div
               className="
                 bg-white/10
@@ -484,9 +421,7 @@ function Navbar() {
                 shadow-md
               "
             >
-
               <div className="text-right">
-
                 <p
                   className="
                     text-sm
@@ -506,9 +441,7 @@ function Navbar() {
                 >
                   {getAccountLabel()}
                 </p>
-
               </div>
-
             </div>
 
             {/* LOGOUT */}
@@ -519,7 +452,7 @@ function Navbar() {
               className="
                 bg-white
                 text-orange-700
-                hover:bg-orange-700
+                hover:bg-orange-100
                 px-5
                 py-2
                 rounded-2xl
@@ -537,14 +470,12 @@ function Navbar() {
 
         {/* MOBILE MENU */}
         {mobileMenuOpen && (
-
           <div
             className="
               lg:hidden
               pb-4
             "
           >
-
             <div
               className="
                 bg-white
@@ -557,6 +488,11 @@ function Navbar() {
 
               <Link
                 to="/dashboard"
+                onClick={() =>
+                  setMobileMenuOpen(
+                    false
+                  )
+                }
                 className="
                   block
                   px-5
@@ -569,6 +505,11 @@ function Navbar() {
 
               <Link
                 to="/inventory"
+                onClick={() =>
+                  setMobileMenuOpen(
+                    false
+                  )
+                }
                 className="
                   block
                   px-5
@@ -579,20 +520,13 @@ function Navbar() {
                 Inventory
               </Link>
 
-              <div
-                className="
-                  px-5
-                  py-3
-                  bg-orange-50
-                  font-bold
-                  text-orange-700
-                "
-              >
-                SALES
-              </div>
-
               <Link
                 to="/sales-terminal"
+                onClick={() =>
+                  setMobileMenuOpen(
+                    false
+                  )
+                }
                 className="
                   block
                   px-5
@@ -605,6 +539,11 @@ function Navbar() {
 
               <Link
                 to="/sales-history"
+                onClick={() =>
+                  setMobileMenuOpen(
+                    false
+                  )
+                }
                 className="
                   block
                   px-5
@@ -617,6 +556,11 @@ function Navbar() {
 
               <Link
                 to="/returns"
+                onClick={() =>
+                  setMobileMenuOpen(
+                    false
+                  )
+                }
                 className="
                   block
                   px-5
@@ -627,8 +571,42 @@ function Navbar() {
                 Returns
               </Link>
 
+              <Link
+                to="/reports"
+                onClick={() =>
+                  setMobileMenuOpen(
+                    false
+                  )
+                }
+                className="
+                  block
+                  px-5
+                  py-4
+                  border-b
+                "
+              >
+                Reports
+              </Link>
+
               {isManager && (
                 <>
+                  <Link
+                    to="/add-phone"
+                    onClick={() =>
+                      setMobileMenuOpen(
+                        false
+                      )
+                    }
+                    className="
+                      block
+                      px-5
+                      py-4
+                      border-b
+                    "
+                  >
+                    Add Phone
+                  </Link>
+
                   <div
                     className="
                       px-5
@@ -638,11 +616,16 @@ function Navbar() {
                       text-orange-700
                     "
                   >
-                    TRANSFERS
+                    MORE
                   </div>
 
                   <Link
                     to="/transfers"
+                    onClick={() =>
+                      setMobileMenuOpen(
+                        false
+                      )
+                    }
                     className="
                       block
                       px-5
@@ -655,6 +638,11 @@ function Navbar() {
 
                   <Link
                     to="/transfer-history"
+                    onClick={() =>
+                      setMobileMenuOpen(
+                        false
+                      )
+                    }
                     className="
                       block
                       px-5
@@ -665,32 +653,13 @@ function Navbar() {
                     Transfer History
                   </Link>
 
-                  <div
-                    className="
-                      px-5
-                      py-3
-                      bg-orange-50
-                      font-bold
-                      text-orange-700
-                    "
-                  >
-                    MANAGE
-                  </div>
-
-                  <Link
-                    to="/add-phone"
-                    className="
-                      block
-                      px-5
-                      py-4
-                      border-b
-                    "
-                  >
-                    Add Phone
-                  </Link>
-
                   <Link
                     to="/branches"
+                    onClick={() =>
+                      setMobileMenuOpen(
+                        false
+                      )
+                    }
                     className="
                       block
                       px-5
@@ -703,6 +672,11 @@ function Navbar() {
 
                   <Link
                     to="/users"
+                    onClick={() =>
+                      setMobileMenuOpen(
+                        false
+                      )
+                    }
                     className="
                       block
                       px-5
@@ -715,6 +689,11 @@ function Navbar() {
 
                   <Link
                     to="/audit-logs"
+                    onClick={() =>
+                      setMobileMenuOpen(
+                        false
+                      )
+                    }
                     className="
                       block
                       px-5
@@ -727,18 +706,6 @@ function Navbar() {
                 </>
               )}
 
-              <Link
-                to="/reports"
-                className="
-                  block
-                  px-5
-                  py-4
-                  border-b
-                "
-              >
-                Reports
-              </Link>
-
               <div
                 className="
                   px-5
@@ -747,7 +714,6 @@ function Navbar() {
                   border-b
                 "
               >
-
                 <p className="font-bold">
                   {user?.username}
                 </p>
@@ -755,7 +721,6 @@ function Navbar() {
                 <p className="text-sm text-gray-500">
                   {getAccountLabel()}
                 </p>
-
               </div>
 
               <button
@@ -776,13 +741,10 @@ function Navbar() {
               </button>
 
             </div>
-
           </div>
-
         )}
 
       </div>
-
     </nav>
   );
 }
