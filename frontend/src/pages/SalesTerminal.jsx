@@ -265,9 +265,24 @@ function SalesTerminal() {
         "Sale completed successfully"
       );
 
-      navigate(
-        `/receipt/${response.data._id}`
-      );
+      const saleId =
+  response.data.sale?._id ||
+  response.data._id;
+
+console.log(
+  "SALE RESPONSE:",
+  response.data
+);
+
+console.log(
+  "SALE ID:",
+  saleId
+);
+
+navigate(
+  `/receipt/${saleId}`
+);
+
     } catch (error) {
       console.log(error);
 

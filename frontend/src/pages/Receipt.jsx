@@ -26,24 +26,13 @@ function Receipt() {
   // =========================
   async function fetchSale() {
     try {
-        console.log(
-          "RECEIPT ID:",
-          id
-        );
-
       const response =
         await api.get(
           `/sales/${id}`
         );
-
       setSale(
         response.data
       );
-
-        console.log(
-          "RECEIPT DATA:",
-          response.data
-        );
 
     } catch (error) {
       console.log(error);
