@@ -98,9 +98,20 @@ function SellPhone() {
       );
 
       // REDIRECT TO RECEIPT
-      navigate(
-        `/receipt/${response.data.sale._id}`
-      );
+      console.log(
+          "SALE RESPONSE:",
+          response.data
+        );
+
+          console.log(
+          "SALE ID:",
+          response.data.sale?._id
+        );
+
+        navigate(
+          `/receipt/${response.data.sale._id}`
+        );
+
     } catch (error) {
       console.log(error);
 
