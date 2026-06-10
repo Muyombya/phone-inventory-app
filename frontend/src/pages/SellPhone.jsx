@@ -98,19 +98,13 @@ function SellPhone() {
       );
 
       // REDIRECT TO RECEIPT
-      console.log(
-          "SALE RESPONSE:",
-          response.data
-        );
+      const saleId =
+  response.data.sale?._id ||
+  response.data._id;
 
-          console.log(
-          "SALE ID:",
-          response.data.sale?._id
-        );
-
-        navigate(
-          `/receipt/${response.data.sale._id}`
-        );
+navigate(
+  `/receipt/${saleId}`
+);
 
     } catch (error) {
       console.log(error);
@@ -120,9 +114,6 @@ function SellPhone() {
       );
     }
   }
-
-
-
   // =========================
   // FORMAT MONEY
   // =========================
