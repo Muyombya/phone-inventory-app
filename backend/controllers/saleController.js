@@ -121,6 +121,7 @@ const ensureManager =
 
 // =========================
 // CREATE SALE
+// SAFE INVENTORY FLOW
 // =========================
 const createSale =
   async (
@@ -159,6 +160,10 @@ const createSale =
       let totalDiscount =
         0;
 
+      // =====================
+      // BUILD SALE DATA
+      // DO NOT DELETE STOCK YET
+      // =====================
       for (const item of items) {
         const phone =
           await Phone.findById(
@@ -182,21 +187,27 @@ const createSale =
 
         const finalPrice =
           Number(
-            phone.sellingPrice
+            phone.sellingPrice ||
+              0
           ) -
           (
             Number(
-              phone.sellingPrice
+              phone.sellingPrice ||
+                0
             ) *
             discount
           ) /
             100;
 
+        const buyingPrice =
+          Number(
+            phone.buyingPrice ||
+              0
+          );
+
         const profit =
           finalPrice -
-          Number(
-            phone.buyingPrice
-          );
+          buyingPrice;
 
         soldItems.push({
           phoneId:
@@ -211,11 +222,13 @@ const createSale =
           imei:
             phone.imei,
 
-          buyingPrice:
-            phone.buyingPrice,
+          buyingPrice,
 
           sellingPrice:
-            phone.sellingPrice,
+            Number(
+              phone.sellingPrice ||
+                0
+            ),
 
           finalPrice,
 
@@ -225,22 +238,30 @@ const createSale =
         });
 
         totalAmount +=
-          finalPrice;
+          Number(
+            finalPrice || 0
+          );
 
         totalProfit +=
-          profit;
+          Number(
+            profit || 0
+          );
 
         totalDiscount +=
-          discount;
-
-        await Phone.findByIdAndDelete(
-          phone._id
-        );
+          Number(
+            discount || 0
+          );
       }
 
+      // =====================
+      // RECEIPT NUMBER
+      // =====================
       const receiptNumber =
         await generateReceiptNumber();
 
+      // =====================
+      // CREATE SALE FIRST
+      // =====================
       const sale =
         await Sale.create({
           items:
@@ -284,6 +305,19 @@ const createSale =
             req.user.branch,
         });
 
+      // =====================
+      // REMOVE INVENTORY
+      // ONLY AFTER SALE EXISTS
+      // =====================
+      for (const item of soldItems) {
+        await Phone.findByIdAndDelete(
+          item.phoneId
+        );
+      }
+
+      // =====================
+      // AUDIT LOG
+      // =====================
       await logAudit({
         user:
           req.user._id,
@@ -304,9 +338,12 @@ const createSale =
           `Created sale ${sale.receiptNumber}`,
       });
 
-      res
+      return res
         .status(201)
-        .json(sale);
+        .json({
+          success: true,
+          sale,
+        });
     } catch (
       error
     ) {
@@ -314,13 +351,14 @@ const createSale =
         error
       );
 
-      res.status(500).json({
-        message:
-          "Server Error",
-      });
+      return res
+        .status(500)
+        .json({
+          message:
+            "Server Error",
+        });
     }
   };
- 
   // =========================
 // GET ALL SALES
 // WITH DATE FILTERING
@@ -388,7 +426,7 @@ const getSales =
               -1,
           });
 
-      res.json(
+      return res.json(
         sales
       );
     } catch (
@@ -398,10 +436,12 @@ const getSales =
         error
       );
 
-      res.status(500).json({
-        message:
-          "Server Error",
-      });
+      return res
+        .status(500)
+        .json({
+          message:
+            "Server Error",
+        });
     }
   };
 
@@ -436,7 +476,7 @@ const getSaleById =
           });
       }
 
-      res.json(
+      return res.json(
         sale
       );
     } catch (
@@ -446,10 +486,12 @@ const getSaleById =
         error
       );
 
-      res.status(500).json({
-        message:
-          "Server Error",
-      });
+      return res
+        .status(500)
+        .json({
+          message:
+            "Server Error",
+        });
     }
   };
 
@@ -487,10 +529,16 @@ const deleteSale =
           });
       }
 
+      // =====================
+      // RESTORE INVENTORY
+      // =====================
       await restoreSaleInventory(
         sale
       );
 
+      // =====================
+      // AUDIT LOG
+      // =====================
       await logAudit({
         user:
           req.user._id,
@@ -511,11 +559,16 @@ const deleteSale =
           `Deleted sale ${sale.receiptNumber} and restored inventory`,
       });
 
+      // =====================
+      // DELETE SALE
+      // =====================
       await Sale.findByIdAndDelete(
         sale._id
       );
 
-      res.json({
+      return res.json({
+        success: true,
+
         message:
           "Sale deleted successfully",
       });
@@ -526,10 +579,12 @@ const deleteSale =
         error
       );
 
-      res.status(500).json({
-        message:
-          "Server Error",
-      });
+      return res
+        .status(500)
+        .json({
+          message:
+            "Server Error",
+        });
     }
   };
   // =========================
@@ -597,7 +652,7 @@ const returnSale =
       }
 
       // =====================
-      // CHECK RETURN RECORD
+      // EXISTING RETURN
       // =====================
       const existingReturn =
         await Return.findOne({
@@ -639,13 +694,19 @@ const returnSale =
                   item.imei,
 
                 buyingPrice:
-                  item.buyingPrice,
+                  Number(
+                    item.buyingPrice || 0
+                  ),
 
                 sellingPrice:
-                  item.sellingPrice,
+                  Number(
+                    item.sellingPrice || 0
+                  ),
 
                 finalPrice:
-                  item.finalPrice,
+                  Number(
+                    item.finalPrice || 0
+                  ),
               })
             ),
 
@@ -666,7 +727,7 @@ const returnSale =
       );
 
       // =====================
-      // STORE ORIGINALS
+      // PRESERVE ORIGINALS
       // =====================
       sale.returnedRevenue =
         sale.totalAmount;
@@ -681,7 +742,7 @@ const returnSale =
         new Date();
 
       // =====================
-      // FINANCIAL REVERSAL
+      // REVERSE FINANCIALS
       // =====================
       sale.totalAmount = 0;
 
@@ -689,16 +750,13 @@ const returnSale =
 
       sale.totalDiscount = 0;
 
-      // =====================
-      // STATUS
-      // =====================
       sale.status =
         "Returned";
 
       await sale.save();
 
       // =====================
-      // AUDIT
+      // AUDIT LOG
       // =====================
       await logAudit({
         user:
@@ -720,7 +778,9 @@ const returnSale =
           `Returned sale ${sale.receiptNumber}. Revenue reversed. Reason: ${reason}`,
       });
 
-      res.json({
+      return res.json({
+        success: true,
+
         message:
           "Sale returned successfully",
 
@@ -733,10 +793,12 @@ const returnSale =
         error
       );
 
-      res.status(500).json({
-        message:
-          "Server Error",
-      });
+      return res
+        .status(500)
+        .json({
+          message:
+            "Server Error",
+        });
     }
   };
 
@@ -797,7 +859,9 @@ const purgeSale =
         sale._id
       );
 
-      res.json({
+      return res.json({
+        success: true,
+
         message:
           "Sale permanently purged",
       });
@@ -808,10 +872,12 @@ const purgeSale =
         error
       );
 
-      res.status(500).json({
-        message:
-          "Server Error",
-      });
+      return res
+        .status(500)
+        .json({
+          message:
+            "Server Error",
+        });
     }
   };
 
