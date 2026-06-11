@@ -120,11 +120,6 @@ function Users() {
           username,
           password,
           role,
-          branch:
-            role ===
-            "manager"
-              ? null
-              : branch,
         }
       );
 
@@ -350,10 +345,6 @@ function Users() {
                 e.target.value
               )
             }
-            disabled={
-              role ===
-              "manager"
-            }
             className="border rounded-xl p-4"
           >
             <option value="">
@@ -546,47 +537,42 @@ function Users() {
 
 
               {/* BRANCH */}
-              {editData.role !==
-                "manager" && (
-                <select
-                  value={
-                    editData.branch
-                  }
-                  onChange={(e) =>
-                    setEditData({
-                      ...editData,
-                      branch:
-                        e.target.value,
-                    })
-                  }
-                  className="w-full border rounded-xl p-3"
-                >
-                  <option value="">
-                    Select Branch
-                  </option>
+              <select
+  value={
+    editData.branch
+  }
+  onChange={(e) =>
+    setEditData({
+      ...editData,
+      branch:
+        e.target.value,
+    })
+  }
+  className="w-full border rounded-xl p-3"
+>
+  <option value="">
+    Select Branch
+  </option>
 
-                  {branches.map(
-                    (
-                      branch
-                    ) => (
-                      <option
-                        key={
-                          branch._id
-                        }
-                        value={
-                          branch._id
-                        }
-                      >
-                        {
-                          branch.name
-                        }
-                      </option>
-                    )
-                  )}
-                </select>
-              )}
-
-
+  {branches.map(
+    (
+      branch
+    ) => (
+      <option
+        key={
+          branch._id
+        }
+        value={
+          branch._id
+        }
+      >
+        {
+          branch.name
+        }
+      </option>
+    )
+  )}
+</select>
 
               {/* PASSWORD */}
               <input
