@@ -448,6 +448,13 @@ function SalesHistory() {
             .includes(
               keyword
             ) ||
+          getSaleBranchName(
+            sale
+          )
+            ?.toLowerCase()
+            .includes(
+              keyword
+            ) ||
           sale.status
             ?.toLowerCase()
             .includes(
@@ -458,6 +465,31 @@ function SalesHistory() {
       sales,
       search,
     ]);
+
+  function getSaleBranch(
+    sale
+  ) {
+    return (
+      sale.branch ||
+      sale.items?.find(
+        (item) =>
+          item.branch
+      )?.branch ||
+      sale.soldBy?.branch ||
+      null
+    );
+  }
+
+  function getSaleBranchName(
+    sale
+  ) {
+    return (
+      getSaleBranch(
+        sale
+      )?.name ||
+      "Branch not assigned"
+    );
+  }
 
   function formatCurrency(
     value
@@ -526,7 +558,9 @@ function SalesHistory() {
             sale.customerPhone,
 
           Branch:
-            sale.branch?.name,
+            getSaleBranchName(
+              sale
+            ),
 
           PhonesSold:
             sale.items?.length,
@@ -1147,9 +1181,9 @@ function SalesHistory() {
                         </td>
 
                         <td className="p-4">
-                          {sale.branch
-                            ?.name ||
-                            "N/A"}
+                          {getSaleBranchName(
+                            sale
+                          )}
                         </td>
 
                         <td className="p-4">
@@ -1408,9 +1442,9 @@ function SalesHistory() {
                       <div>
                         Branch:
                         {" "}
-                        {sale.branch
-                          ?.name ||
-                          "N/A"}
+                        {getSaleBranchName(
+                          sale
+                        )}
                       </div>
 
                       <div>

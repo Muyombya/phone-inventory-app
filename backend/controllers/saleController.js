@@ -474,10 +474,18 @@ const getSales =
         )
           .populate(
             "soldBy",
-            "username"
+            "username branch"
           )
           .populate(
             "branch",
+            "name location contact"
+          )
+          .populate(
+            "items.branch",
+            "name location contact"
+          )
+          .populate(
+            "soldBy.branch",
             "name location contact"
           )
           .sort({
@@ -485,8 +493,27 @@ const getSales =
               -1,
           });
 
+      const salesWithBranches =
+        sales.map(
+          (sale) => {
+            const saleObject =
+              sale.toObject();
+
+            saleObject.branch =
+              saleObject.branch ||
+              saleObject.items?.find(
+                (item) =>
+                  item.branch
+              )?.branch ||
+              saleObject.soldBy?.branch ||
+              null;
+
+            return saleObject;
+          }
+        );
+
       return res.json(
-        sales
+        salesWithBranches
       );
     } catch (
       error
