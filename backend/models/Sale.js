@@ -31,6 +31,24 @@ const soldItemSchema =
       required: true,
     },
 
+    color: {
+      type: String,
+
+      default: "",
+    },
+
+    ram: {
+      type: String,
+
+      default: "",
+    },
+
+    storage: {
+      type: String,
+
+      default: "",
+    },
+
     buyingPrice: {
       type: Number,
 
