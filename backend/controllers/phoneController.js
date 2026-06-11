@@ -153,15 +153,31 @@ const addPhone =
           });
       }
 
-      let assignedBranch =
-        branch;
+      const assignedBranch =
+        branch ||
+        req.user.branch;
 
-      if (
-        req.user.role !==
-        "manager"
-      ) {
-        assignedBranch =
-          req.user.branch;
+      if (!assignedBranch) {
+        return res
+          .status(400)
+          .json({
+            message:
+              "Please select a branch for this phone",
+          });
+      }
+
+      const branchExists =
+        await Branch.findById(
+          assignedBranch
+        );
+
+      if (!branchExists) {
+        return res
+          .status(400)
+          .json({
+            message:
+              "Selected branch was not found",
+          });
       }
 
       const phone =
