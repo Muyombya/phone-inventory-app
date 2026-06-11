@@ -86,10 +86,11 @@ const updateUser = async (
         });
     }
 
-    // =====================
-    // VALIDATE BRANCH
-    // =====================
-    if (branch) {
+   // =====================
+// =====================
+// VALIDATE BRANCH
+// =====================
+if (branch) {
   const branchExists =
     await Branch.findById(
       branch
@@ -105,34 +106,21 @@ const updateUser = async (
   }
 }
 
-      if (
-        !branchExists
-      ) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Branch not found",
-          });
-      }
-    }
+// =====================
+// UPDATE USER
+// =====================
+user.username =
+  username ||
+  user.username;
 
-    // =====================
-    // UPDATE USER
-    // =====================
-    user.username =
-      username ||
-      user.username;
+user.role =
+  role ||
+  user.role;
 
-    user.role =
-      role ||
-      user.role;
-
-    if (branch) {
+if (branch) {
   user.branch =
     branch;
 }
-
     // =====================
     // UPDATE PASSWORD
     // =====================
