@@ -83,7 +83,8 @@ const restoreSaleInventory =
           item.sellingPrice,
 
         branch:
-          sale.branch,
+          sale.branch ||
+          req.user.branch,
 
         addedBy:
           sale.soldBy,
@@ -716,7 +717,8 @@ const returnSale =
             req.user._id,
 
           branch:
-            sale.branch,
+            sale.branch ||
+            req.user.branch,
         });
 
       // =====================
