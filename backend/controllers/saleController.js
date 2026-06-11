@@ -48,11 +48,28 @@ const generateReceiptNumber =
     )}`;
   };
 
+const resolveBranchId =
+  (...branches) => {
+    for (const branch of branches) {
+      if (!branch) {
+        continue;
+      }
+
+      return branch._id ||
+        branch;
+    }
+
+    return null;
+  };
+
 // =========================
 // RESTORE INVENTORY
 // =========================
 const restoreSaleInventory =
-  async (sale) => {
+  async (
+    sale,
+    branch
+  ) => {
     for (const item of sale.items) {
       const existingPhone =
         await Phone.findOne({
@@ -83,10 +100,11 @@ const restoreSaleInventory =
           item.sellingPrice,
 
         branch:
-          sale.branch ||
-          req.user.branch,
+          branch ||
+          sale.branch,
 
         addedBy:
+          sale.soldBy?._id ||
           sale.soldBy,
 
         soldPrice: 0,
@@ -519,6 +537,9 @@ const deleteSale =
       const sale =
         await Sale.findById(
           req.params.id
+        ).populate(
+          "soldBy",
+          "branch"
         );
 
       if (!sale) {
@@ -530,11 +551,28 @@ const deleteSale =
           });
       }
 
+      const restoreBranch =
+        resolveBranchId(
+          sale.branch,
+          sale.soldBy?.branch,
+          req.user.branch
+        );
+
+      if (!restoreBranch) {
+        return res
+          .status(400)
+          .json({
+            message:
+              "Cannot delete sale because no branch is assigned to the sale, seller, or current user",
+          });
+      }
+
       // =====================
       // RESTORE INVENTORY
       // =====================
       await restoreSaleInventory(
-        sale
+        sale,
+        restoreBranch
       );
 
       // =====================
@@ -545,7 +583,7 @@ const deleteSale =
           req.user._id,
 
         branch:
-          req.user.branch,
+          restoreBranch,
 
         action:
           "DELETE_SALE",
@@ -626,6 +664,9 @@ const returnSale =
       const sale =
         await Sale.findById(
           req.params.id
+        ).populate(
+          "soldBy",
+          "branch"
         );
 
       if (!sale) {
@@ -634,6 +675,22 @@ const returnSale =
           .json({
             message:
               "Sale not found",
+          });
+      }
+
+      const returnBranch =
+        resolveBranchId(
+          sale.branch,
+          sale.soldBy?.branch,
+          req.user.branch
+        );
+
+      if (!returnBranch) {
+        return res
+          .status(400)
+          .json({
+            message:
+              "Cannot return sale because no branch is assigned to the sale, seller, or current user",
           });
       }
 
@@ -717,15 +774,15 @@ const returnSale =
             req.user._id,
 
           branch:
-            sale.branch ||
-            req.user.branch,
+            returnBranch,
         });
 
       // =====================
       // RESTORE INVENTORY
       // =====================
       await restoreSaleInventory(
-        sale
+        sale,
+        returnBranch
       );
 
       // =====================
@@ -765,7 +822,7 @@ const returnSale =
           req.user._id,
 
         branch:
-          req.user.branch,
+          returnBranch,
 
         action:
           "RETURN_SALE",
