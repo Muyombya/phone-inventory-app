@@ -89,14 +89,21 @@ const updateUser = async (
     // =====================
     // VALIDATE BRANCH
     // =====================
-    if (
-      role !== "manager" &&
+    if (branch) {
+  const branchExists =
+    await Branch.findById(
       branch
-    ) {
-      const branchExists =
-        await Branch.findById(
-          branch
-        );
+    );
+
+  if (!branchExists) {
+    return res
+      .status(400)
+      .json({
+        message:
+          "Branch not found",
+      });
+  }
+}
 
       if (
         !branchExists
@@ -121,18 +128,10 @@ const updateUser = async (
       role ||
       user.role;
 
-    // =====================
-    // MANAGER HAS NO BRANCH
-    // =====================
-    if (
-      role === "manager"
-    ) {
-      user.branch = null;
-    } else {
-      user.branch =
-        branch ||
-        user.branch;
-    }
+    if (branch) {
+  user.branch =
+    branch;
+}
 
     // =====================
     // UPDATE PASSWORD
