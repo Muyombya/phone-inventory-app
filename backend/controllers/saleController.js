@@ -179,6 +179,11 @@ const createSale =
       let totalDiscount =
         0;
 
+      let saleBranch =
+        resolveBranchId(
+          req.user.branch
+        );
+
       // =====================
       // BUILD SALE DATA
       // DO NOT DELETE STOCK YET
@@ -197,6 +202,29 @@ const createSale =
                 "Phone not found",
             });
         }
+
+        const phoneBranch =
+          resolveBranchId(
+            phone.branch
+          );
+
+        if (
+          saleBranch &&
+          phoneBranch &&
+          saleBranch.toString() !==
+            phoneBranch.toString()
+        ) {
+          return res
+            .status(400)
+            .json({
+              message:
+                "All sold phones must belong to the same branch",
+            });
+        }
+
+        saleBranch =
+          saleBranch ||
+          phoneBranch;
 
         const discount =
           Number(
@@ -254,6 +282,9 @@ const createSale =
           profit,
 
           discount,
+
+          branch:
+            phoneBranch,
         });
 
         totalAmount +=
@@ -270,6 +301,15 @@ const createSale =
           Number(
             discount || 0
           );
+      }
+
+      if (!saleBranch) {
+        return res
+          .status(400)
+          .json({
+            message:
+              "Cannot create sale because no branch is assigned to the selected phones or current user",
+          });
       }
 
       // =====================
@@ -321,7 +361,7 @@ const createSale =
             req.user._id,
 
           branch:
-            req.user.branch,
+            saleBranch,
         });
 
       // =====================
@@ -342,7 +382,7 @@ const createSale =
           req.user._id,
 
         branch:
-          req.user.branch,
+          saleBranch,
 
         action:
           "CREATE_SALE",
@@ -554,6 +594,10 @@ const deleteSale =
       const restoreBranch =
         resolveBranchId(
           sale.branch,
+          sale.items?.find(
+            (item) =>
+              item.branch
+          )?.branch,
           sale.soldBy?.branch,
           req.user.branch
         );
@@ -647,6 +691,7 @@ const returnSale =
 
       const {
         reason,
+        branch,
       } = req.body;
 
       if (
@@ -681,7 +726,12 @@ const returnSale =
       const returnBranch =
         resolveBranchId(
           sale.branch,
+          sale.items?.find(
+            (item) =>
+              item.branch
+          )?.branch,
           sale.soldBy?.branch,
+          branch,
           req.user.branch
         );
 

@@ -73,6 +73,9 @@ function SalesHistory() {
   const [sales, setSales] =
     useState([]);
 
+  const [branches, setBranches] =
+    useState([]);
+
   const [loading, setLoading] =
     useState(true);
 
@@ -183,7 +186,30 @@ function SalesHistory() {
     fetchSales(
       "month"
     );
+
+    if (isManager) {
+      fetchBranches();
+    }
   }, []);
+
+  async function fetchBranches() {
+    try {
+      const response =
+        await api.get(
+          "/branches"
+        );
+
+      setBranches(
+        response.data || []
+      );
+    } catch (
+      error
+    ) {
+      console.log(
+        error
+      );
+    }
+  }
 
   function handleApplyFilter() {
     fetchSales(
@@ -243,7 +269,7 @@ function SalesHistory() {
   // RETURN SALE
   // =========================
   async function returnSale(
-    id
+    sale
   ) {
     if (!isManager)
       return;
@@ -260,12 +286,73 @@ function SalesHistory() {
       return;
     }
 
+    const returnData = {
+      reason,
+    };
+
+    const saleBranch =
+      sale.branch ||
+      sale.items?.find(
+        (item) =>
+          item.branch
+      )?.branch;
+
+    if (!saleBranch) {
+      if (
+        branches.length === 0
+      ) {
+        alert(
+          "This sale has no branch assigned, and no branches are available to choose from."
+        );
+
+        return;
+      }
+
+      const branchNames =
+        branches
+          .map(
+            (branch) =>
+              branch.name
+          )
+          .join(", ");
+
+      const branchName =
+        window.prompt(
+          `This sale has no branch assigned. Enter the return branch name: ${branchNames}`
+        );
+
+      if (
+        !branchName ||
+        !branchName.trim()
+      ) {
+        return;
+      }
+
+      const selectedBranch =
+        branches.find(
+          (branch) =>
+            branch.name.toLowerCase() ===
+            branchName
+              .trim()
+              .toLowerCase()
+        );
+
+      if (!selectedBranch) {
+        alert(
+          "Branch not found. Please enter one of the listed branch names."
+        );
+
+        return;
+      }
+
+      returnData.branch =
+        selectedBranch._id;
+    }
+
     try {
       await api.post(
-        `/sales/${id}/return`,
-        {
-          reason,
-        }
+        `/sales/${sale._id}/return`,
+        returnData
       );
 
       alert(
@@ -1191,7 +1278,7 @@ function SalesHistory() {
                                   <button
                                     onClick={() =>
                                       returnSale(
-                                        sale._id
+                                        sale
                                       )
                                     }
                                     className="
@@ -1435,7 +1522,7 @@ function SalesHistory() {
                             <button
                               onClick={() =>
                                 returnSale(
-                                  sale._id
+                                  sale
                                 )
                               }
                               className="
