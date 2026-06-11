@@ -84,35 +84,44 @@ const restoreSaleInventory =
       }
 
       await Phone.create({
-        brand:
-          item.brand,
+  brand:
+    item.brand,
 
-        model:
-          item.model,
+  model:
+    item.model,
 
-        imei:
-          item.imei,
+  imei:
+    item.imei,
 
-        buyingPrice:
-          item.buyingPrice,
+  color:
+    item.color,
 
-        sellingPrice:
-          item.sellingPrice,
+  ram:
+    item.ram,
 
-        branch:
-          branch ||
-          sale.branch,
+  storage:
+    item.storage,
 
-        addedBy:
-          sale.soldBy?._id ||
-          sale.soldBy,
+  buyingPrice:
+    item.buyingPrice,
 
-        soldPrice: 0,
+  sellingPrice:
+    item.sellingPrice,
 
-        profit: 0,
+  branch:
+    branch ||
+    sale.branch,
 
-        soldAt: null,
-      });
+  addedBy:
+    sale.soldBy?._id ||
+    sale.soldBy,
+
+  soldPrice: 0,
+
+  profit: 0,
+
+  soldAt: null,
+});
     }
   };
 
@@ -257,35 +266,44 @@ const createSale =
           buyingPrice;
 
         soldItems.push({
-          phoneId:
-            phone._id,
+  phoneId:
+    phone._id,
 
-          brand:
-            phone.brand,
+  brand:
+    phone.brand,
 
-          model:
-            phone.model,
+  model:
+    phone.model,
 
-          imei:
-            phone.imei,
+  imei:
+    phone.imei,
 
-          buyingPrice,
+  color:
+    phone.color,
 
-          sellingPrice:
-            Number(
-              phone.sellingPrice ||
-                0
-            ),
+  ram:
+    phone.ram,
 
-          finalPrice,
+  storage:
+    phone.storage,
 
-          profit,
+  buyingPrice,
 
-          discount,
+  sellingPrice:
+    Number(
+      phone.sellingPrice ||
+        0
+    ),
 
-          branch:
-            phoneBranch,
-        });
+  finalPrice,
+
+  profit,
+
+  discount,
+
+  branch:
+    phoneBranch,
+});
 
         totalAmount +=
           Number(
