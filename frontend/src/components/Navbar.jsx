@@ -279,6 +279,19 @@ function Navbar() {
             >
               Reports
             </Link>
+            <Link
+  to="/audit-logs"
+  className="
+    px-4
+    py-2
+    rounded-full
+    hover:bg-orange-600
+    transition
+    font-semibold
+  "
+>
+  Audit Logs
+</Link>
 
             {/* ADD PHONE */}
             {isManager && (
@@ -391,18 +404,6 @@ function Navbar() {
                         "
                       >
                         Users
-                      </Link>
-
-                      <Link
-                        to="/audit-logs"
-                        className="
-                          block
-                          px-5
-                          py-4
-                          hover:bg-orange-700
-                        "
-                      >
-                        Audit Logs
                       </Link>
                     </div>
                   </div>
@@ -588,6 +589,23 @@ function Navbar() {
                 Reports
               </Link>
 
+              <Link
+  to="/audit-logs"
+  onClick={() =>
+    setMobileMenuOpen(
+      false
+    )
+  }
+  className="
+    block
+    px-5
+    py-4
+    border-b
+  "
+>
+  Audit Logs
+</Link>
+
               {isManager && (
                 <>
                   <Link
@@ -685,23 +703,6 @@ function Navbar() {
                     "
                   >
                     Users
-                  </Link>
-
-                  <Link
-                    to="/audit-logs"
-                    onClick={() =>
-                      setMobileMenuOpen(
-                        false
-                      )
-                    }
-                    className="
-                      block
-                      px-5
-                      py-4
-                      border-b
-                    "
-                  >
-                    Audit Logs
                   </Link>
                 </>
               )}
