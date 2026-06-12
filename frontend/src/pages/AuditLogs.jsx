@@ -597,7 +597,7 @@ const getAuditDescription =
         sourceBranchId
       )
     ) {
-      return `Transferred ${log.entityType} to ${log.destinationBranch?.name}`;
+     return `Transferred ${log.itemName || log.entityType} to ${log.destinationBranch?.name}`;
     }
 
     if (
@@ -608,7 +608,7 @@ const getAuditDescription =
         destinationBranchId
       )
     ) {
-      return `Received ${log.entityType} from ${log.sourceBranch?.name}`;
+     return `Received ${log.itemName || log.entityType} from ${log.sourceBranch?.name}`;
     }
 
     return (

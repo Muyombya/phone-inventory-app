@@ -13,6 +13,7 @@ const logAudit =
     action,
     entityType,
     entityId,
+    itemName,
     description,
   }) => {
     try {
@@ -27,6 +28,7 @@ const logAudit =
   action,
   entityType,
   entityId,
+  itemName,
   description,
 });
     } catch (

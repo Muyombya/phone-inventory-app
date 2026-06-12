@@ -52,6 +52,10 @@ const auditSchema =
         type: String,
       },
 
+      itemName: {
+      type: String,
+      },
+
       description: {
         type: String,
         required: true,

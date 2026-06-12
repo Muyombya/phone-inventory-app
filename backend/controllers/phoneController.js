@@ -565,10 +565,13 @@ const oldBranchName =
     "Phone",
 
   entityId:
-    phone._id,
+  phone._id,
 
-  description:
-    `Transferred ${phone.brand} ${phone.model} (${phone.imei}) from ${oldBranchName} to ${newBranch.name}`,
+itemName:
+  `${phone.brand} ${phone.model} (${phone.imei})`,
+
+description:
+  `Transferred ${phone.brand} ${phone.model} (${phone.imei}) from ${oldBranchName} to ${newBranch.name}`,
 });
 
       res
