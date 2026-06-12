@@ -541,24 +541,35 @@ const oldBranchName =
       // AUDIT LOG
       // =========================
       await logAudit({
-        user:
-          req.user.id,
+  user:
+    req.user.id,
 
-        branch:
-          branchId,
+  branch:
+    branchId,
 
-        action:
-          "TRANSFER",
+  sourceBranch:
+    oldBranchData._id,
 
-        entityType:
-          "Phone",
+  destinationBranch:
+    newBranch._id,
 
-        entityId:
-          phone._id,
+  affectedBranches: [
+    oldBranchData._id,
+    newBranch._id,
+  ],
 
-        description:
-          `Transferred ${phone.brand} ${phone.model} (${phone.imei}) from ${oldBranchName} to ${newBranch.name}`,
-      });
+  action:
+    "TRANSFER",
+
+  entityType:
+    "Phone",
+
+  entityId:
+    phone._id,
+
+  description:
+    `Transferred ${phone.brand} ${phone.model} (${phone.imei}) from ${oldBranchName} to ${newBranch.name}`,
+});
 
       res
         .status(201)

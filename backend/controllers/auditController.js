@@ -10,20 +10,28 @@ const getAuditLogs =
     res
   ) => {
     try {
-      if (
-        req.user.role !==
-        "manager"
-      ) {
-        return res
-          .status(403)
-          .json({
-            message:
-              "Access denied",
-          });
-      }
+      let query = {};
+
+if (
+  req.user.role !==
+  "manager"
+) {
+ query = {
+  $or: [
+    {
+      branch:
+        req.user.branch._id,
+    },
+    {
+      affectedBranches:
+        req.user.branch._id,
+    },
+  ],
+};
+}
 
       const logs =
-        await Audit.find()
+        await Audit.find(query)
           .sort({
             createdAt:
               -1,
@@ -33,9 +41,17 @@ const getAuditLogs =
             "username role"
           )
           .populate(
-            "branch",
-            "name"
-          );
+  "branch",
+  "name"
+)
+.populate(
+  "sourceBranch",
+  "name"
+)
+.populate(
+  "destinationBranch",
+  "name"
+);
 
       res.json(logs);
     } catch (

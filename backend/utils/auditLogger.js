@@ -5,6 +5,11 @@ const logAudit =
   async ({
     user,
     branch,
+
+    sourceBranch,
+    destinationBranch,
+    affectedBranches,
+
     action,
     entityType,
     entityId,
@@ -12,13 +17,18 @@ const logAudit =
   }) => {
     try {
       await Audit.create({
-        user,
-        branch,
-        action,
-        entityType,
-        entityId,
-        description,
-      });
+  user,
+  branch,
+
+  sourceBranch,
+  destinationBranch,
+  affectedBranches,
+
+  action,
+  entityType,
+  entityId,
+  description,
+});
     } catch (
       error
     ) {

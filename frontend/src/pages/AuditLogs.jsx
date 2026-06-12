@@ -554,6 +554,68 @@ function AuditLogs() {
       branchFilter,
     ]);
 
+// =========================
+// AUDIT DESCRIPTION
+// =========================
+const getAuditDescription =
+  (log) => {
+    if (
+      log.action !==
+      "TRANSFER"
+    ) {
+      return (
+        log.description
+      );
+    }
+
+    if (
+      user?.role ===
+      "manager"
+    ) {
+      return (
+        log.description
+      );
+    }
+
+    const userBranchId =
+      user?.branch?._id ||
+      user?.branch;
+
+    const sourceBranchId =
+      log.sourceBranch?._id ||
+      log.sourceBranch;
+
+    const destinationBranchId =
+      log.destinationBranch?._id ||
+      log.destinationBranch;
+
+    if (
+      String(
+        userBranchId
+      ) ===
+      String(
+        sourceBranchId
+      )
+    ) {
+      return `Transferred ${log.entityType} to ${log.destinationBranch?.name}`;
+    }
+
+    if (
+      String(
+        userBranchId
+      ) ===
+      String(
+        destinationBranchId
+      )
+    ) {
+      return `Received ${log.entityType} from ${log.sourceBranch?.name}`;
+    }
+
+    return (
+      log.description
+    );
+  };
+
   // =========================
   // STATS
   // =========================
@@ -592,29 +654,6 @@ function AuditLogs() {
           )
       ).length,
   };
-
-  // =========================
-  // ACCESS CONTROL
-  // =========================
-  if (
-    user?.role !==
-    "manager"
-  ) {
-    return (
-      <div className="p-6">
-        <div
-          className="
-            bg-red-100
-            text-red-700
-            p-4
-            rounded-xl
-          "
-        >
-          Access Denied
-        </div>
-      </div>
-    );
-  }
 
   // =========================
   // LOADING
@@ -697,117 +736,122 @@ function AuditLogs() {
           </div>
 
           <div
-            className="
-              flex
-              flex-wrap
-              gap-2
-            "
-          >
-            <button
-              onClick={
-                exportCSV
-              }
-              className="
-                px-3
-                py-2
-                text-sm
-                rounded-lg
-                bg-blue-100
-                text-blue-700
-                font-medium
-              "
-            >
-              Export CSV
-            </button>
+  className="
+    flex
+    flex-wrap
+    gap-2
+  "
+>
+  <button
+    onClick={
+      exportCSV
+    }
+    className="
+      px-3
+      py-2
+      text-sm
+      rounded-lg
+      bg-blue-100
+      text-blue-700
+      font-medium
+    "
+  >
+    Export CSV
+  </button>
 
-            <button
-              onClick={() =>
-                clearLogs(
-                  "30days"
-                )
-              }
-              disabled={
-                clearingLogs
-              }
-              className="
-                px-3
-                py-2
-                text-sm
-                rounded-lg
-                bg-amber-100
-                text-amber-700
-                font-medium
-              "
-            >
-              Clear 30D
-            </button>
+  {user?.role ===
+    "manager" && (
+    <>
+      <button
+        onClick={() =>
+          clearLogs(
+            "30days"
+          )
+        }
+        disabled={
+          clearingLogs
+        }
+        className="
+          px-3
+          py-2
+          text-sm
+          rounded-lg
+          bg-amber-100
+          text-amber-700
+          font-medium
+        "
+      >
+        Clear 30D
+      </button>
 
-            <button
-              onClick={() =>
-                clearLogs(
-                  "90days"
-                )
-              }
-              disabled={
-                clearingLogs
-              }
-              className="
-                px-3
-                py-2
-                text-sm
-                rounded-lg
-                bg-orange-100
-                text-orange-700
-                font-medium
-              "
-            >
-              Clear 90D
-            </button>
+      <button
+        onClick={() =>
+          clearLogs(
+            "90days"
+          )
+        }
+        disabled={
+          clearingLogs
+        }
+        className="
+          px-3
+          py-2
+          text-sm
+          rounded-lg
+          bg-orange-100
+          text-orange-700
+          font-medium
+        "
+      >
+        Clear 90D
+      </button>
 
-            <button
-              onClick={() =>
-                clearLogs(
-                  "1year"
-                )
-              }
-              disabled={
-                clearingLogs
-              }
-              className="
-                px-3
-                py-2
-                text-sm
-                rounded-lg
-                bg-red-100
-                text-red-700
-                font-medium
-              "
-            >
-              Clear 1Y
-            </button>
+      <button
+        onClick={() =>
+          clearLogs(
+            "1year"
+          )
+        }
+        disabled={
+          clearingLogs
+        }
+        className="
+          px-3
+          py-2
+          text-sm
+          rounded-lg
+          bg-red-100
+          text-red-700
+          font-medium
+        "
+      >
+        Clear 1Y
+      </button>
 
-            <button
-              onClick={() =>
-                clearLogs(
-                  "all"
-                )
-              }
-              disabled={
-                clearingLogs
-              }
-              className="
-                px-3
-                py-2
-                text-sm
-                rounded-lg
-                bg-[#6b0f1a]
-                text-white
-                font-medium
-              "
-            >
-              Clear All
-            </button>
-          </div>
+      <button
+        onClick={() =>
+          clearLogs(
+            "all"
+          )
+        }
+        disabled={
+          clearingLogs
+        }
+        className="
+          px-3
+          py-2
+          text-sm
+          rounded-lg
+          bg-[#6b0f1a]
+          text-white
+          font-medium
+        "
+      >
+        Clear All
+      </button>
+    </>
+  )}
+</div>
         </div>
       </div>
 
@@ -1228,7 +1272,9 @@ function AuditLogs() {
 
                       <td className="p-3 text-sm">
                         {
-                          log.description
+                          getAuditDescription(
+                            log
+                          )
                         }
                       </td>
                     </tr>
@@ -1381,7 +1427,9 @@ function AuditLogs() {
                     "
                   >
                     {
-                      log.description
+                    getAuditDescription(
+                        log
+                      )
                     }
                   </div>
                 </div>

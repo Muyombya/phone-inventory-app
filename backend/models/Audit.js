@@ -7,28 +7,44 @@ const auditSchema =
       user: {
         type:
           mongoose.Schema.Types.ObjectId,
-
         ref: "User",
-
         required: true,
       },
 
       branch: {
         type:
           mongoose.Schema.Types.ObjectId,
-
         ref: "Branch",
       },
 
+      // Branch-aware transfer fields
+      sourceBranch: {
+        type:
+          mongoose.Schema.Types.ObjectId,
+        ref: "Branch",
+      },
+
+      destinationBranch: {
+        type:
+          mongoose.Schema.Types.ObjectId,
+        ref: "Branch",
+      },
+
+      affectedBranches: [
+        {
+          type:
+            mongoose.Schema.Types.ObjectId,
+          ref: "Branch",
+        },
+      ],
+
       action: {
         type: String,
-
         required: true,
       },
 
       entityType: {
         type: String,
-
         required: true,
       },
 
@@ -38,7 +54,6 @@ const auditSchema =
 
       description: {
         type: String,
-
         required: true,
       },
     },
@@ -50,6 +65,7 @@ const auditSchema =
 // =========================
 // INDEXES
 // =========================
+
 auditSchema.index({
   createdAt: -1,
 });
@@ -64,6 +80,10 @@ auditSchema.index({
 
 auditSchema.index({
   branch: 1,
+});
+
+auditSchema.index({
+  affectedBranches: 1,
 });
 
 module.exports =
