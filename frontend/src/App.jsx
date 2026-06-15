@@ -62,7 +62,6 @@ localStorage.removeItem(
 "token"
 );
 
-```
   localStorage.removeItem(
     "user"
   );
@@ -70,7 +69,6 @@ localStorage.removeItem(
   window.location.href =
     "/login";
 }, []);
-```
 
 useSessionTimeout(
 handleTimeout,
@@ -88,7 +86,6 @@ return children;
 function App() {
 return ( <BrowserRouter>
 
-```
   <Routes>
 
     {/* LOGIN */}
@@ -252,7 +249,6 @@ return ( <BrowserRouter>
   </Routes>
 
 </BrowserRouter>
-```
 
 );
 }

@@ -37,7 +37,6 @@ color = "text-gray-900",
       {title}
     </p>
 
-```
 <h2
   className={`
     text-lg
@@ -49,8 +48,6 @@ color = "text-gray-900",
 >
   {value}
 </h2>
-```
-
   </div>
 );
 
@@ -73,8 +70,6 @@ const res =
 await api.get(
 "/phones"
 );
-
-```
   setPhones(
     res.data
   );
@@ -83,7 +78,6 @@ await api.get(
 } finally {
   setLoading(false);
 }
-```
 
 }
 
@@ -100,7 +94,6 @@ phones.forEach((phone) => {
 const key =
 `${phone.brand}||${phone.model}||${phone.storage}||${phone.ram}`;
 
-```
 const branch =
   phone.branch?.name ||
   "Unknown";
@@ -131,7 +124,6 @@ groupedStock[key]
 
 groupedStock[key]
   .total += 1;
-```
 
 });
 
@@ -145,7 +137,6 @@ groupedStock
 const query =
 search.toLowerCase();
 
-```
   return (
     item.brand
       ?.toLowerCase()
@@ -155,8 +146,6 @@ search.toLowerCase();
       .includes(query)
   );
 });
-```
-
 // =========================
 // KPI DATA
 // =========================
@@ -203,7 +192,6 @@ return ( <div
    "
  >
 
-```
   {/* HEADER */}
   <div
     className="
@@ -517,7 +505,6 @@ return ( <div
   )}
 
 </div>
-```
 
 );
 }
