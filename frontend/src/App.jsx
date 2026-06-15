@@ -48,37 +48,19 @@ import { useCallback } from "react";
 // =========================
 // PROTECTED ROUTE
 // =========================
-function ProtectedRoute({
-  children,
-}) {
-  const token =
-    localStorage.getItem(
-      "token"
-    );
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem("token");
 
-  const handleTimeout =
-    useCallback(() => {
-      localStorage.removeItem(
-        "token"
-      );
+  const handleTimeout = useCallback(() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+  }, []);
 
-      localStorage.removeItem(
-        "user"
-      );
-
-      window.location.href =
-        "/login";
-    }, []);
-
-  useSessionTimeout(
-    handleTimeout,
-    15
-  );
+  useSessionTimeout(handleTimeout, 15);
 
   if (!token) {
-    return (
-      <Navigate to="/login" />
-    );
+    return <Navigate to="/login" />;
   }
 
   return children;
