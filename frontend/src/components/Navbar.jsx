@@ -63,7 +63,6 @@ false
 );
 }
 
-```
   if (
     salesMenuRef.current &&
     !salesMenuRef.current.contains(
@@ -86,7 +85,6 @@ return () =>
     "mousedown",
     handleClickOutside
   );
-```
 
 }, []);
 
@@ -95,7 +93,6 @@ localStorage.removeItem(
 "token"
 );
 
-```
 localStorage.removeItem(
   "user"
 );
@@ -103,7 +100,6 @@ localStorage.removeItem(
 navigate(
   "/login"
 );
-```
 
 }
 
@@ -112,7 +108,6 @@ if (!user) {
 return "";
 }
 
-```
 if (
   user.role ===
   "manager"
@@ -128,7 +123,6 @@ if (
 }
 
 return "";
-```
 
 }
 
@@ -185,8 +179,6 @@ return ( <nav
              object-contain
            "
          /> </Link>
-
-```
       <button
         onClick={() =>
           setMobileMenuOpen(
@@ -240,8 +232,6 @@ return ( <nav
         >
           Stock Lookup
         </NavLink>
-```
-```
         <div
           ref={salesMenuRef}
           className="
@@ -538,8 +528,6 @@ return ( <nav
             overflow-hidden
           "
         >
-```
-```
           <Link
             to="/dashboard"
             onClick={() =>
@@ -829,7 +817,6 @@ return ( <nav
 
   </div>
 </nav>
-```
 
 );
 }
