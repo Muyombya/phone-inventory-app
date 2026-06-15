@@ -1,8 +1,8 @@
 import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
+BrowserRouter,
+Routes,
+Route,
+Navigate,
 } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
@@ -12,6 +12,8 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 
 import Inventory from "./pages/Inventory";
+
+import StockLookup from "./pages/StockLookup";
 
 import AddPhone from "./pages/AddPhone";
 
@@ -47,201 +49,212 @@ import { useCallback } from "react";
 // PROTECTED ROUTE
 // =========================
 function ProtectedRoute({
-  children,
+children,
 }) {
-  const token =
-    localStorage.getItem(
-      "token"
-    );
+const token =
+localStorage.getItem(
+"token"
+);
 
-  const handleTimeout =
-    useCallback(() => {
-      localStorage.removeItem(
-        "token"
-      );
+const handleTimeout =
+useCallback(() => {
+localStorage.removeItem(
+"token"
+);
 
-      localStorage.removeItem(
-        "user"
-      );
-
-      window.location.href =
-        "/login";
-    }, []);
-
-  useSessionTimeout(
-    handleTimeout,
-    15
+```
+  localStorage.removeItem(
+    "user"
   );
 
-  if (!token) {
-    return (
-      <Navigate to="/login" />
-    );
-  }
+  window.location.href =
+    "/login";
+}, []);
+```
 
-  return children;
+useSessionTimeout(
+handleTimeout,
+15
+);
+
+if (!token) {
+return ( <Navigate to="/login" />
+);
+}
+
+return children;
 }
 
 function App() {
-  return (
-    <BrowserRouter>
+return ( <BrowserRouter>
 
-      <Routes>
+```
+  <Routes>
 
-        {/* LOGIN */}
-        <Route
-          path="/login"
-          element={<Login />}
-        />
+    {/* LOGIN */}
+    <Route
+      path="/login"
+      element={<Login />}
+    />
 
-        {/* PROTECTED ROUTES */}
-        <Route
-          path="*"
-          element={
-            <ProtectedRoute>
+    {/* PROTECTED ROUTES */}
+    <Route
+      path="*"
+      element={
+        <ProtectedRoute>
 
-              <div className="min-h-screen bg-gray-100">
+          <div className="min-h-screen bg-gray-100">
 
-                <Navbar />
+            <Navbar />
 
-                <Routes>
+            <Routes>
 
-                  {/* DASHBOARD */}
-                  <Route
-                    path="/"
-                    element={
-                      <Dashboard />
-                    }
-                  />
+              {/* DASHBOARD */}
+              <Route
+                path="/"
+                element={
+                  <Dashboard />
+                }
+              />
 
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <Dashboard />
-                    }
-                  />
+              <Route
+                path="/dashboard"
+                element={
+                  <Dashboard />
+                }
+              />
 
-                  {/* INVENTORY */}
-                  <Route
-                    path="/inventory"
-                    element={
-                      <Inventory />
-                    }
-                  />
+              {/* INVENTORY */}
+              <Route
+                path="/inventory"
+                element={
+                  <Inventory />
+                }
+              />
 
-                  {/* ADD PHONE */}
-                  <Route
-                    path="/add-phone"
-                    element={
-                      <AddPhone />
-                    }
-                  />
+              {/* STOCK LOOKUP */}
+              <Route
+                path="/stock-lookup"
+                element={
+                  <StockLookup />
+                }
+              />
 
-                  {/* EDIT PHONE */}
-                  <Route
-                    path="/edit-phone/:id"
-                    element={
-                      <EditPhone />
-                    }
-                  />
+              {/* ADD PHONE */}
+              <Route
+                path="/add-phone"
+                element={
+                  <AddPhone />
+                }
+              />
 
-                  {/* SALES */}
-                  <Route
-                    path="/sales-terminal"
-                    element={
-                      <SalesTerminal />
-                    }
-                  />
+              {/* EDIT PHONE */}
+              <Route
+                path="/edit-phone/:id"
+                element={
+                  <EditPhone />
+                }
+              />
 
-                  <Route
-                    path="/sales-history"
-                    element={
-                      <SalesHistory />
-                    }
-                  />
+              {/* SALES */}
+              <Route
+                path="/sales-terminal"
+                element={
+                  <SalesTerminal />
+                }
+              />
 
-                  <Route
-                    path="/returns"
-                    element={
-                      <ReturnsHistory />
-                    }
-                  />
+              <Route
+                path="/sales-history"
+                element={
+                  <SalesHistory />
+                }
+              />
 
-                  {/* A4 RECEIPT */}
-                  <Route
-                    path="/receipt/:id"
-                    element={
-                      <Receipt />
-                    }
-                  />
+              <Route
+                path="/returns"
+                element={
+                  <ReturnsHistory />
+                }
+              />
 
-                  {/* THERMAL RECEIPT */}
-                  <Route
-                    path="/thermal-receipt/:id"
-                    element={
-                      <ThermalReceipt />
-                    }
-                  />
+              {/* A4 RECEIPT */}
+              <Route
+                path="/receipt/:id"
+                element={
+                  <Receipt />
+                }
+              />
 
-                  {/* TRANSFERS */}
-                  <Route
-                    path="/transfers"
-                    element={
-                      <Transfers />
-                    }
-                  />
+              {/* THERMAL RECEIPT */}
+              <Route
+                path="/thermal-receipt/:id"
+                element={
+                  <ThermalReceipt />
+                }
+              />
 
-                  <Route
-                    path="/transfer-history"
-                    element={
-                      <TransferHistory />
-                    }
-                  />
+              {/* TRANSFERS */}
+              <Route
+                path="/transfers"
+                element={
+                  <Transfers />
+                }
+              />
 
-                  {/* REPORTS */}
-                  <Route
-                    path="/reports"
-                    element={
-                      <Reports />
-                    }
-                  />
+              <Route
+                path="/transfer-history"
+                element={
+                  <TransferHistory />
+                }
+              />
 
-                  {/* BRANCHES */}
-                  <Route
-                    path="/branches"
-                    element={
-                      <Branches />
-                    }
-                  />
+              {/* REPORTS */}
+              <Route
+                path="/reports"
+                element={
+                  <Reports />
+                }
+              />
 
-                  {/* USERS */}
-                  <Route
-                    path="/users"
-                    element={
-                      <Users />
-                    }
-                  />
+              {/* BRANCHES */}
+              <Route
+                path="/branches"
+                element={
+                  <Branches />
+                }
+              />
 
-                  {/* AUDIT LOGS */}
-                  <Route
-                    path="/audit-logs"
-                    element={
-                      <AuditLogs />
-                    }
-                  />
+              {/* USERS */}
+              <Route
+                path="/users"
+                element={
+                  <Users />
+                }
+              />
 
-                </Routes>
+              {/* AUDIT LOGS */}
+              <Route
+                path="/audit-logs"
+                element={
+                  <AuditLogs />
+                }
+              />
 
-              </div>
+            </Routes>
 
-            </ProtectedRoute>
-          }
-        />
+          </div>
 
-      </Routes>
+        </ProtectedRoute>
+      }
+    />
 
-    </BrowserRouter>
-  );
+  </Routes>
+
+</BrowserRouter>
+```
+
+);
 }
 
 export default App;
