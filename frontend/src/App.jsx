@@ -43,7 +43,7 @@ import AuditLogs from "./pages/AuditLogs";
 
 import useSessionTimeout from "./hooks/useSessionTimeout";
 
-import { useCallback } from "react";
+//import { useCallback } from "react";
 
 // =========================
 // PROTECTED ROUTE
@@ -51,13 +51,13 @@ import { useCallback } from "react";
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
 
-  const handleTimeout = useCallback(() => {
+  const handleTimeout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     window.location.href = "/login";
-  }, []);
+  };
 
-  useSessionTimeout(handleTimeout, 15);
+  useSessionTimeout(handleTimeout, 10);
 
   if (!token) {
     return <Navigate to="/login" />;
