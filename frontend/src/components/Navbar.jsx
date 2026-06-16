@@ -5,9 +5,10 @@ useState,
 } from "react";
 
 import {
-Link,
-NavLink,
-useNavigate,
+  Link,
+  NavLink,
+  useLocation,
+  useNavigate,
 } from "react-router-dom";
 
 import Logo from "../assets/Logo.png";
@@ -15,6 +16,9 @@ import Logo from "../assets/Logo.png";
 function Navbar() {
 const navigate =
 useNavigate();
+
+const location =
+useLocation();
 
 const [
 mobileMenuOpen,
@@ -39,9 +43,9 @@ useRef(null);
 
 const user =
 JSON.parse(
-localStorage.getItem(
-"user"
-)
+  localStorage.getItem(
+    "user"
+  ) || "null"
 );
 
 const isManager =
@@ -126,20 +130,22 @@ return "";
 
 }
 
+const salesActive =
+  location.pathname ===
+    "/sales-terminal" ||
+  location.pathname ===
+    "/sales-history" ||
+  location.pathname ===
+    "/returns";
+
 const navClass = ({
-isActive,
+  isActive,
 }) =>
-`       px-4
-      py-2
-      rounded-full
-      transition
-      font-semibold
-      ${
-        isActive
-          ? "bg-white text-orange-700"
-          : "hover:bg-orange-600"
-      }
-    `;
+  `px-4 py-2 rounded-full transition font-semibold ${
+    isActive
+      ? "bg-white text-orange-700"
+      : "hover:bg-orange-600"
+  }`;
 
 return ( <nav
    className="
@@ -239,22 +245,26 @@ return ( <nav
           "
         >
           <button
-            onClick={() =>
-              setSalesMenuOpen(
-                !salesMenuOpen
-              )
-            }
-            className="
-              px-4
-              py-2
-              rounded-full
-              hover:bg-orange-600
-              transition
-              font-semibold
-            "
-          >
-            Sales ▾
-          </button>
+  onClick={() =>
+    setSalesMenuOpen(
+      !salesMenuOpen
+    )
+  }
+  className={`
+    px-4
+    py-2
+    rounded-full
+    transition
+    font-semibold
+    ${
+      salesActive
+        ? "bg-white text-orange-700"
+        : "hover:bg-orange-600"
+    }
+  `}
+>
+  Sales ▾
+</button>
 
           {salesMenuOpen && (
             <div
@@ -319,17 +329,26 @@ return ( <nav
         </div>
 
         <NavLink
-          to="/reports"
-          className={
-            navClass
-          }
-        >
-          Reports
-        </NavLink>
+                  to="/reports"
+                  className={
+                    navClass
+                  }
+                >
+                  Reports
+                </NavLink>
 
-        {isManager && (
-          <Link
-            to="/add-phone"
+                <NavLink
+                  to="/audit-logs"
+                  className={
+                    navClass
+                  }
+                >
+                  Audit Logs
+                </NavLink>
+
+                {isManager && (
+            <Link
+              to="/add-phone"
             className="
               px-4
               py-2
@@ -438,17 +457,6 @@ return ( <nav
                     Users
                   </Link>
 
-                  <Link
-                    to="/audit-logs"
-                    className="
-                      block
-                      px-5
-                      py-4
-                      hover:bg-orange-700
-                    "
-                  >
-                    Audit Logs
-                  </Link>
                 </div>
               </div>
             )}
@@ -659,6 +667,20 @@ return ( <nav
             Reports
           </Link>
 
+          <Link
+            to="/audit-logs"
+            onClick={() =>
+              setMobileMenuOpen(false)
+            }
+            className="
+              block
+              px-5
+              py-4
+              border-b
+            "
+          >
+            Audit Logs
+          </Link>
           {isManager && (
             <>
               <Link
@@ -756,23 +778,6 @@ return ( <nav
                 "
               >
                 Users
-              </Link>
-
-              <Link
-                to="/audit-logs"
-                onClick={() =>
-                  setMobileMenuOpen(
-                    false
-                  )
-                }
-                className="
-                  block
-                  px-5
-                  py-4
-                  border-b
-                "
-              >
-                Audit Logs
               </Link>
             </>
           )}
