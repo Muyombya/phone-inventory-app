@@ -669,214 +669,223 @@ grouped[key]
     Inventory Distribution Matrix
   </h3>
 
-  <div
-    className="
-      overflow-x-auto
-    "
-  >
-    <table
-      className="
-        w-full
-        min-w-[700px]
-      "
-    >
-      <thead>
-        <tr
+  {(() => {
+    const colors = [
+      ...new Set(
+        Object.keys(
+          selectedVariant.colors || {}
+        )
+      ),
+    ].sort();
+
+    const formatColor = (
+      color
+    ) =>
+      color
+        .toLowerCase()
+        .replace(
+          /\b\w/g,
+          (c) => c.toUpperCase()
+        );
+
+    return (
+      <div
+        className="
+          overflow-x-auto
+        "
+      >
+        <table
           className="
-            border-b
-            border-orange-200
+            w-full
+            min-w-[700px]
           "
         >
-          <th
-            className="
-              text-left
-              py-3
-              text-xs
-              uppercase
-              tracking-wide
-            "
-          >
-            Branch
-          </th>
-
-      {Object.keys(
-        selectedVariant.colors
-      ).map(
-        (color) => (
-          <th
-            key={color}
-            className="
-              text-center
-              py-3
-              text-xs
-              uppercase
-              tracking-wide
-            "
-          >
-            {color}
-          </th>
-        )
-      )}
-
-      <th
-        className="
-          text-right
-          py-3
-          text-xs
-          uppercase
-          tracking-wide
-        "
-      >
-        Total
-      </th>
-    </tr>
-  </thead>
-
-  <tbody>
-
-    {Object.entries(
-      selectedVariant.branchColors
-    ).map(
-      (
-        [
-          branch,
-          colorMap,
-        ]
-      ) => {
-        const rowTotal =
-          Object.values(
-            colorMap
-          ).reduce(
-            (
-              sum,
-              qty
-            ) =>
-              sum +
-              qty,
-            0
-          );
-
-        return (
-          <tr
-            key={branch}
-            className="
-              border-b
-              border-orange-50
-            "
-          >
-            <td
+          <thead>
+            <tr
               className="
-                py-3
-                font-medium
+                border-b
+                border-orange-200
               "
             >
-              {branch}
-            </td>
+              <th
+                className="
+                  text-left
+                  py-3
+                  text-xs
+                  uppercase
+                  tracking-wide
+                "
+              >
+                Branch
+              </th>
 
-            {Object.keys(
-              selectedVariant.colors
+              {colors.map(
+                (color) => (
+                  <th
+                    key={color}
+                    className="
+                      text-center
+                      py-3
+                      text-xs
+                      uppercase
+                      tracking-wide
+                    "
+                  >
+                    {formatColor(
+                      color
+                    )}
+                  </th>
+                )
+              )}
+
+              <th
+                className="
+                  text-right
+                  py-3
+                  text-xs
+                  uppercase
+                  tracking-wide
+                "
+              >
+                Total
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {Object.entries(
+              selectedVariant.branchColors || {}
             ).map(
               (
-                color
-              ) => (
-                <td
-                  key={color}
-                  className="
-                    text-center
-                    font-bold
-                  "
-                >
-                  {colorMap[
-                    color
-                  ] || 0}
-                </td>
-              )
+                [
+                  branch,
+                  colorMap,
+                ]
+              ) => {
+                const rowTotal =
+                  colors.reduce(
+                    (
+                      sum,
+                      color
+                    ) =>
+                      sum +
+                      (colorMap[
+                        color
+                      ] || 0),
+                    0
+                  );
+
+                return (
+                  <tr
+                    key={branch}
+                    className="
+                      border-b
+                      border-orange-50
+                    "
+                  >
+                    <td
+                      className="
+                        py-3
+                        font-medium
+                      "
+                    >
+                      {branch}
+                    </td>
+
+                    {colors.map(
+                      (
+                        color
+                      ) => (
+                        <td
+                          key={color}
+                          className="
+                            text-center
+                            font-bold
+                          "
+                        >
+                          {colorMap[
+                            color
+                          ] || 0}
+                        </td>
+                      )
+                    )}
+
+                    <td
+                      className="
+                        text-right
+                        font-bold
+                        text-orange-700
+                      "
+                    >
+                      {rowTotal}
+                    </td>
+                  </tr>
+                );
+              }
             )}
 
-            <td
+            <tr
               className="
-                text-right
-                font-bold
-                text-orange-700
+                bg-orange-50
+                border-t-2
+                border-orange-200
+                font-black
               "
             >
-              {rowTotal}
-            </td>
-          </tr>
-        );
-      }
-    )}
+              <td
+                className="
+                  py-3
+                  text-orange-700
+                "
+              >
+                TOTAL
+              </td>
 
-    {/* TOTAL ROW */}
+              {colors.map(
+                (color) => {
+                  const total =
+                    Object.values(
+                      selectedVariant.branchColors || {}
+                    ).reduce(
+                      (
+                        sum,
+                        colorMap
+                      ) =>
+                        sum +
+                        (colorMap[
+                          color
+                        ] || 0),
+                      0
+                    );
 
-    <tr
-      className="
-        bg-orange-50
-        border-t-2
-        border-orange-200
-        font-black
-      "
-    >
-      <td
-        className="
-          py-3
-          text-orange-700
-        "
-      >
-        TOTAL
-      </td>
+                  return (
+                    <td
+                      key={color}
+                      className="
+                        text-center
+                        text-orange-700
+                      "
+                    >
+                      {total}
+                    </td>
+                  );
+                }
+              )}
 
-      {Object.keys(
-        selectedVariant.colors
-      ).map(
-        (color) => {
-          const colorTotal =
-            Object.values(
-              selectedVariant.branchColors
-            ).reduce(
-              (
-                sum,
-                colorMap
-              ) =>
-                sum +
-                (
-                  colorMap[
-                    color
-                  ] || 0
-                ),
-              0
-            );
-
-          return (
-            <td
-              key={color}
-              className="
-                text-center
-                text-orange-700
-              "
-            >
-              {colorTotal}
-            </td>
-          );
-        }
-      )}
-
-      <td
-        className="
-          text-right
-          text-orange-700
-        "
-      >
-        {
-          selectedVariant.total
-        }
-      </td>
-    </tr>
-
-  </tbody>
-</table>
-
-  </div>
+              <td
+                className="
+                  text-right
+                  text-orange-700
+                "
+              >
+                {selectedVariant.total}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  })()}
 </div>
 
         </div>
