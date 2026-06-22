@@ -97,24 +97,29 @@ function StockLookup() {
     useMemo(() => {
       const grouped = {};
 
-      phones.forEach(
-        (phone) => {
-          const key =
-            `${phone.brand}||${phone.model}||${phone.storage}||${phone.ram}`;
+      phones.forEach((phone) => {
+const key =
+`${phone.brand}||${phone.model}||${phone.storage}||${phone.ram}`;
 
-          const branch =
-            phone.branch
-              ?.name ||
-            "Unknown";
+const branch =
+phone.branch?.name ||
+"Unknown";
 
-          if (
-            !grouped[key]
-          ) {
-            grouped[key] = {
-  brand: phone.brand,
-  model: phone.model,
-  storage: phone.storage,
-  ram: phone.ram,
+// Normalize color names
+const normalizedColor =
+String(
+phone.color || "UNKNOWN"
+)
+.trim()
+.replace(/\s+/g, " ")
+.toUpperCase();
+
+if (!grouped[key]) {
+grouped[key] = {
+brand: phone.brand,
+model: phone.model,
+storage: phone.storage,
+ram: phone.ram,
 
   buyingPrice:
     phone.buyingPrice || 0,
@@ -130,58 +135,58 @@ function StockLookup() {
 
   branchColors: {},
 };
-          }
 
-          grouped[
-            key
-          ].total += 1;
+}
 
-          grouped[
-            key
-          ].branches[
-            branch
-          ] =
-            (grouped[
-              key
-            ].branches[
-              branch
-            ] || 0) + 1;
+// Total stock
+grouped[key].total += 1;
 
-          grouped[
-            key
-          ].colors[
-            phone.color
-          ] =
-            (grouped[
-              key
-            ].colors[
-              phone.color
-            ] || 0) + 1;
-          if (
-  !grouped[key]
-    .branchColors[
-      branch
-    ]
+// Branch totals
+grouped[key].branches[
+branch
+] =
+(
+grouped[key]
+.branches[
+branch
+] || 0
+) + 1;
+
+// Color totals
+grouped[key].colors[
+normalizedColor
+] =
+(
+grouped[key]
+.colors[
+normalizedColor
+] || 0
+) + 1;
+
+// Branch + Color Matrix
+if (
+!grouped[key]
+.branchColors[
+branch
+]
 ) {
-  grouped[key]
-    .branchColors[
-      branch
-    ] = {};
+grouped[key]
+.branchColors[
+branch
+] = {};
 }
 
 grouped[key]
-  .branchColors[
-    branch
-  ][phone.color] =
-  (
-    grouped[key]
-      .branchColors[
-        branch
-      ][phone.color] || 0
-  ) + 1;  
-
-        }
-      );
+.branchColors[
+branch
+][normalizedColor] =
+(
+grouped[key]
+.branchColors[
+branch
+][normalizedColor] || 0
+) + 1;
+});
 
       return grouped;
     }, [phones]);
