@@ -111,32 +111,25 @@ function StockLookup() {
             !grouped[key]
           ) {
             grouped[key] = {
-              brand:
-                phone.brand,
+  brand: phone.brand,
+  model: phone.model,
+  storage: phone.storage,
+  ram: phone.ram,
 
-              model:
-                phone.model,
+  buyingPrice:
+    phone.buyingPrice || 0,
 
-              storage:
-                phone.storage,
+  sellingPrice:
+    phone.sellingPrice || 0,
 
-              ram:
-                phone.ram,
+  total: 0,
 
-              buyingPrice:
-                phone.buyingPrice ||
-                0,
+  branches: {},
 
-              sellingPrice:
-                phone.sellingPrice ||
-                0,
+  colors: {},
 
-              total: 0,
-
-              branches: {},
-
-              colors: {},
-            };
+  branchColors: {},
+};
           }
 
           grouped[
@@ -164,6 +157,29 @@ function StockLookup() {
             ].colors[
               phone.color
             ] || 0) + 1;
+          if (
+  !grouped[key]
+    .branchColors[
+      branch
+    ]
+) {
+  grouped[key]
+    .branchColors[
+      branch
+    ] = {};
+}
+
+grouped[key]
+  .branchColors[
+    branch
+  ][phone.color] =
+  (
+    grouped[key]
+      .branchColors[
+        branch
+      ][phone.color] || 0
+  ) + 1;  
+
         }
       );
 
@@ -738,6 +754,163 @@ function StockLookup() {
               </table>
             </div>
           </div>
+
+          {/* STOCK DISTRIBUTION */}
+<div
+  className="
+    bg-gray-50
+    rounded-2xl
+    p-4
+    border
+    border-gray-200
+    mb-6
+  "
+>
+  <h3
+    className="
+      text-lg
+      font-black
+      text-orange-700
+      mb-4
+    "
+  >
+    Stock Distribution
+  </h3>
+
+  <div
+    className="
+      overflow-x-auto
+    "
+  >
+    <table
+      className="
+        w-full
+        min-w-[700px]
+      "
+    >
+      <thead>
+        <tr
+          className="
+            border-b
+          "
+        >
+          <th
+            className="
+              text-left
+              py-3
+            "
+          >
+            Branch
+          </th>
+
+          {Object.keys(
+            selectedVariant.colors
+          ).map(
+            (color) => (
+              <th
+                key={color}
+                className="
+                  text-center
+                  py-3
+                "
+              >
+                {color}
+              </th>
+            )
+          )}
+
+          <th
+            className="
+              text-right
+              py-3
+            "
+          >
+            Total
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {Object.entries(
+          selectedVariant.branchColors
+        ).map(
+          (
+            [
+              branch,
+              colorMap,
+            ]
+          ) => {
+            const total =
+              Object.values(
+                colorMap
+              ).reduce(
+                (
+                  sum,
+                  qty
+                ) =>
+                  sum +
+                  qty,
+                0
+              );
+
+            return (
+              <tr
+                key={
+                  branch
+                }
+                className="
+                  border-b
+                  last:border-0
+                "
+              >
+                <td
+                  className="
+                    py-3
+                    font-medium
+                  "
+                >
+                  {branch}
+                </td>
+
+                {Object.keys(
+                  selectedVariant.colors
+                ).map(
+                  (
+                    color
+                  ) => (
+                    <td
+                      key={
+                        color
+                      }
+                      className="
+                        text-center
+                        font-bold
+                      "
+                    >
+                      {colorMap[
+                        color
+                      ] || 0}
+                    </td>
+                  )
+                )}
+
+                <td
+                  className="
+                    text-right
+                    font-bold
+                    text-orange-700
+                  "
+                >
+                  {total}
+                </td>
+              </tr>
+            );
+          }
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
 
           {/* BRANCH BREAKDOWN */}
           <div
