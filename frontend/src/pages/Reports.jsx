@@ -320,8 +320,7 @@ function Reports() {
               text-[#6b0f1a]
             "
           >
-            Reports &
-            Analytics
+            Management Report
           </h1>
 
           <p
@@ -331,11 +330,10 @@ function Reports() {
               mt-1
             "
           >
-            Revenue,
-            inventory,
-            sales,
-            returns and
-            branch performance
+            Inventory management,
+            replenishment,
+            sales performance
+            and branch operations
           </p>
         </div>
 
@@ -582,7 +580,7 @@ function Reports() {
             mb-3
           "
         >
-          Selected Period
+         Executive Summary
         </h2>
 
         <div
@@ -628,421 +626,422 @@ function Reports() {
 
           </div>
       </div>
-
-            {/* ===================== */}
-            {/* TODAY / WEEK */}
-            {/* ===================== */}
+      {/* ===================== */}
+      {/* RETURNS ANALYTICS */}
+      {/* ===================== */}
       <div
         className="
-          grid
-          grid-cols-1
-          lg:grid-cols-2
-          gap-4
+          bg-white
+          rounded-xl
+          border
+          p-4
+          shadow-sm
         "
       >
-        {/* ===================== */}
-        {/* REPLENISHMENT REPORT */}
-        {/* ===================== */}
+        <h2
+          className="
+            text-lg
+            font-bold
+            mb-4
+          "
+        >
+          Returns Analytics
+        </h2>
 
-          <div
-            className="
-              bg-white
-              rounded-xl
-              border
-              p-6
-              shadow-sm
-              mt-6
-            "
-          >
+        <div
+          className="
+            grid
+            grid-cols-1
+            md:grid-cols-3
+            gap-4
+          "
+        >
+          <KPI
+            title="Total Returns"
+            value={returnsAnalytics.returnsCount}
+            color="text-red-600"
+          />
 
-            <div className="flex items-center justify-between mb-4">
+          <KPI
+            title="Returned Revenue"
+            value={formatCurrency(
+              returnsAnalytics.returnedRevenue
+            )}
+            color="text-orange-600"
+          />
 
-              <div>
+          <KPI
+            title="Average Return"
+            value={formatCurrency(
+              returnsAnalytics.averageReturnValue
+            )}
+            color="text-blue-600"
+          />
+        </div>
+      </div>
 
-                <h2 className="text-lg font-bold">
-                  Replenishment Report
-                </h2>
+      {/* ===================== */}
+      {/* REPLENISHMENT SUMMARY */}
+      {/* ===================== */}
+      <div
+        className="
+          bg-white
+          rounded-xl
+          border
+          p-4
+          shadow-sm
+        "
+      >
+        <h2
+          className="
+            text-lg
+            font-bold
+            mb-4
+          "
+        >
+          Replenishment Summary
+        </h2>
 
-                <p className="text-sm text-gray-500">
-                  Models requiring replenishment (Threshold ≤ 3)
-                </p>
+        <div
+          className="
+            grid
+            grid-cols-2
+            md:grid-cols-4
+            gap-4
+          "
+        >
+          <KPI
+            title="Critical"
+            value={replenishmentSummary?.critical ?? 0}
+            color="text-red-600"
+          />
 
-              </div>
+          <KPI
+            title="Low"
+            value={replenishmentSummary?.low ?? 0}
+            color="text-orange-600"
+          />
 
-              <div className="text-sm text-gray-600">
+          <KPI
+            title="Monitor"
+            value={replenishmentSummary?.monitor ?? 0}
+            color="text-yellow-600"
+          />
 
-                Total Models:
-                <span className="font-semibold ml-2">
-                  {replenishmentSummary?.totalModels ?? 0}
-                </span>
+          <KPI
+            title="Inventory Value"
+            value={formatCurrency(
+              replenishmentSummary?.estimatedStockValue ?? 0
+            )}
+            color="text-[#6b0f1a]"
+          />
+        </div>
+      </div>
 
-              </div>
+      {/* ===================== */}
+      {/* REPLENISHMENT REPORT */}
+      {/* ===================== */}
+      <div
+        className="
+          bg-white
+          rounded-xl
+          border
+          p-6
+          shadow-sm
+        "
+      >
+        <div
+          className="
+            flex
+            items-center
+            justify-between
+            mb-5
+          "
+        >
+          <div>
+            <h2 className="text-lg font-bold">
+              Replenishment Report
+            </h2>
 
-            </div>
+            <p className="text-sm text-gray-500">
+              Models requiring replenishment
+            </p>
+          </div>
+        </div>
 
-            <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
 
-              <table className="min-w-full border-collapse">
+          <table className="min-w-full border-collapse">
 
-                <thead>
+            <thead>
 
-                  <tr className="bg-gray-100">
+              <tr className="bg-gray-100">
 
-                    <th className="border px-3 py-2 text-left">
-                      #
-                    </th>
+                <th className="border px-3 py-2 text-left">
+                  #
+                </th>
 
-                    <th className="border px-3 py-2 text-left">
-                      Brand
-                    </th>
+                <th className="border px-3 py-2 text-left">
+                  Brand
+                </th>
 
-                    <th className="border px-3 py-2 text-left">
-                      Model
-                    </th>
+                <th className="border px-3 py-2 text-left">
+                  Model
+                </th>
 
-                    <th className="border px-3 py-2 text-left">
-                      Storage
-                    </th>
+                <th className="border px-3 py-2 text-left">
+                  Storage
+                </th>
 
-                    <th className="border px-3 py-2 text-left">
-                      RAM
-                    </th>
+                <th className="border px-3 py-2 text-left">
+                  RAM
+                </th>
 
-                    <th className="border px-3 py-2 text-center">
-                      Status
-                    </th>
+                <th className="border px-3 py-2 text-center">
+                  Status
+                </th>
+
+                {reportBranches?.map((branch) => (
+                  <th
+                    key={branch}
+                    className="border px-3 py-2 text-center"
+                  >
+                    {branch}
+                  </th>
+                ))}
+
+                <th className="border px-3 py-2 text-center">
+                  Total
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+                            {replenishmentReport?.length ? (
+
+                replenishmentReport.map((item) => (
+
+                  <tr
+                    key={item.priority}
+                    className={
+                      item.status === "Critical"
+                        ? "bg-red-50"
+                        : item.status === "Low"
+                        ? "bg-orange-50"
+                        : "bg-yellow-50"
+                    }
+                  >
+
+                    <td className="border px-3 py-2">
+                      {item.priority}
+                    </td>
+
+                    <td className="border px-3 py-2">
+                      {item.brand}
+                    </td>
+
+                    <td className="border px-3 py-2 font-medium">
+                      {item.model}
+                    </td>
+
+                    <td className="border px-3 py-2">
+                      {item.storage}
+                    </td>
+
+                    <td className="border px-3 py-2">
+                      {item.ram}
+                    </td>
+
+                    <td className="border px-3 py-2 text-center">
+
+                      <span
+                        className={`
+                          px-2
+                          py-1
+                          rounded-full
+                          text-xs
+                          font-semibold
+                          ${
+                            item.status === "Critical"
+                              ? "bg-red-100 text-red-700"
+                              : item.status === "Low"
+                              ? "bg-orange-100 text-orange-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }
+                        `}
+                      >
+                        {item.status}
+                      </span>
+
+                    </td>
 
                     {reportBranches?.map((branch) => (
 
-                      <th
+                      <td
                         key={branch}
-                        className="border px-3 py-2 text-center"
+                        className="
+                          border
+                          px-3
+                          py-2
+                          text-center
+                        "
                       >
-                        {branch}
-                      </th>
+                        {item.branches?.[branch] ?? 0}
+                      </td>
 
                     ))}
 
-                    <th className="border px-3 py-2 text-center">
-                      Total
-                    </th>
+                    <td
+                      className={`
+                        border
+                        px-3
+                        py-2
+                        text-center
+                        font-bold
+                        ${
+                          item.total === 1
+                            ? "text-red-700"
+                            : item.total === 2
+                            ? "text-orange-700"
+                            : "text-yellow-700"
+                        }
+                      `}
+                    >
+                      {item.total}
+                    </td>
 
                   </tr>
 
-                </thead>
+                ))
 
-                <tbody>
+              ) : (
 
-                  {replenishmentReport?.length ? (
+                <tr>
 
-                    replenishmentReport.map((item) => (
+                  <td
+                    colSpan={
+                      7 +
+                      (reportBranches?.length || 0)
+                    }
+                    className="
+                      text-center
+                      py-8
+                      text-gray-500
+                    "
+                  >
+                    No models require replenishment.
+                  </td>
 
-                      <tr
-                          key={item.priority}
-                          className={
-                            item.status === "Critical"
-                              ? "bg-red-50"
-                              : item.status === "Low"
-                              ? "bg-orange-50"
-                              : "bg-yellow-50"
-                          }
-                        >
+                </tr>
 
-                        <td className="border px-3 py-2">
+              )}
 
-                          {item.priority}
+            </tbody>
 
-                        </td>
+          </table>
 
-                        <td className="border px-3 py-2">
-
-                          {item.brand}
-
-                        </td>
-
-                        <td className="border px-3 py-2 font-medium">
-
-                          {item.model}
-
-                        </td>
-
-                        <td className="border px-3 py-2">
-
-                          {item.storage}
-
-                        </td>
-
-                        <td className="border px-3 py-2">
-
-                          {item.ram}
-
-                        </td>
-
-                        <td className="border px-3 py-2 text-center">
-
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-semibold
-                            ${
-                              item.status === "Critical"
-                                ? "bg-red-100 text-red-700"
-                                : item.status === "Low"
-                                ? "bg-orange-100 text-orange-700"
-                                : "bg-yellow-100 text-yellow-700"
-                            }`}
-                          >
-
-                            {item.status}
-
-                          </span>
-
-                        </td>
-
-                        {reportBranches.map((branch) => (
-
-                          <td
-                            key={branch}
-                            className="border px-3 py-2 text-center"
-                          >
-
-                            {item.branches?.[branch] ?? 0}
-
-                          </td>
-
-                        ))}
-
-                        <td
-                          className={`
-                            border
-                            px-3
-                            py-2
-                            text-center
-                            font-bold
-                            ${
-                              item.total === 1
-                                ? "text-red-700"
-                                : item.total === 2
-                                ? "text-orange-700"
-                                : "text-yellow-700"
-                            }
-                          `}
-                        >
-
-                          {item.total}
-
-                        </td>
-
-                      </tr>
-
-                    ))
-
-                  ) : (
-
-                    <tr>
-
-                      <td
-                        colSpan={
-                          7 +
-                          (reportBranches?.length || 0)
-                        }
-                        className="text-center py-6 text-gray-500"
-                      >
-
-                        No models require replenishment.
-
-                      </td>
-
-                    </tr>
-
-                  )}
-
-                </tbody>
-
-              </table>
-
-            </div>
-
-          </div>
-
-        {/* LAST 7 DAYS */}
-        <div
-          className="
-            bg-white
-            rounded-xl
-            border
-            p-4
-            shadow-sm
-          "
-        >
-          <h2
-            className="
-              text-base
-              font-bold
-              mb-3
-            "
-          >
-            Last 7 Days
-          </h2>
-
-          <div
-            className="
-              space-y-2
-              text-sm
-            "
-          >
-            <div className="flex justify-between">
-              <span>
-                Gross Revenue
-              </span>
-
-              <span className="font-semibold">
-                {formatCurrency(
-                  weekly.grossRevenue
-                )}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>
-                Returned Revenue
-              </span>
-
-              <span className="font-semibold text-red-600">
-                {formatCurrency(
-                  weekly.returnedRevenue
-                )}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>
-                Net Revenue
-              </span>
-
-              <span className="font-semibold text-green-600">
-                {formatCurrency(
-                  weekly.netRevenue
-                )}
-              </span>
-            </div>
-
-            {isManager && (
-              <div className="flex justify-between">
-                <span>
-                  Net Profit
-                </span>
-
-                <span className="font-semibold text-blue-600">
-                  {formatCurrency(
-                    weekly.netProfit
-                  )}
-                </span>
-              </div>
-            )}
-
-            <div className="flex justify-between">
-              <span>
-                Transactions
-              </span>
-
-              <span className="font-semibold">
-                {weekly.transactions}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>
-                Phones Sold
-              </span>
-
-              <span className="font-semibold">
-                {weekly.phonesSold}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>
-                Returns
-              </span>
-
-              <span className="font-semibold text-red-600">
-                {weekly.returns}
-              </span>
-            </div>
-          </div>
         </div>
-      </div>
 
-      {/* ===================== */}
-      {/* RETURNS + TOP BRANCH */}
-      {/* ===================== */}
-     <div className="space-y-4">
-        {/* RETURNS */}
-        <div
-          className="
-            bg-white
-            rounded-xl
-            border
-            p-3
-            shadow-sm
-          "
-        >
-          <h2
-            className="
-              text-base
-              font-bold
-              mb-3
-            "
-          >
-            Returns Analytics
-          </h2>
-
-          <div
-            className="
-              grid
-              grid-cols-1
-              md:grid-cols-3
-              gap-3
-            "
-          >
-            <div>
-              <p className="text-xs text-gray-500">
-                Total Returns
-              </p>
-
-              <h3 className="text-lg font-bold text-red-600">
-                {
-                  returnsAnalytics.returnsCount
-                }
-              </h3>
-            </div>
-
-            <div>
-              <p className="text-xs text-gray-500">
-                Returned Revenue
-              </p>
-
-              <h3 className="text-lg font-bold">
-                {formatCurrency(
-                  returnsAnalytics.returnedRevenue
-                )}
-              </h3>
-            </div>
-
-            <div>
-              <p className="text-xs text-gray-500">
-                Average Return
-              </p>
-
-              <h3 className="text-lg font-bold">
-                {formatCurrency(
-                  returnsAnalytics.averageReturnValue
-                )}
-              </h3>
-            </div>
-          </div>
-        </div>
       </div>
             {/* ===================== */}
+      {/* LAST 7 DAYS */}
+      {/* ===================== */}
+      <div
+        className="
+          bg-white
+          rounded-xl
+          border
+          p-4
+          shadow-sm
+        "
+      >
+        <h2
+          className="
+            text-lg
+            font-bold
+            mb-4
+          "
+        >
+          Last 7 Days
+        </h2>
+
+        <div
+          className="
+            space-y-2
+            text-sm
+          "
+        >
+          <div className="flex justify-between">
+            <span>Gross Revenue</span>
+
+            <span className="font-semibold">
+              {formatCurrency(
+                weekly.grossRevenue
+              )}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Returned Revenue</span>
+
+            <span className="font-semibold text-red-600">
+              {formatCurrency(
+                weekly.returnedRevenue
+              )}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Net Revenue</span>
+
+            <span className="font-semibold text-green-600">
+              {formatCurrency(
+                weekly.netRevenue
+              )}
+            </span>
+          </div>
+
+          {isManager && (
+            <div className="flex justify-between">
+              <span>Net Profit</span>
+
+              <span className="font-semibold text-blue-600">
+                {formatCurrency(
+                  weekly.netProfit
+                )}
+              </span>
+            </div>
+          )}
+
+          <div className="flex justify-between">
+            <span>Transactions</span>
+
+            <span className="font-semibold">
+              {weekly.transactions}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Phones Sold</span>
+
+            <span className="font-semibold">
+              {weekly.phonesSold}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span>Returns</span>
+
+            <span className="font-semibold text-red-600">
+              {weekly.returns}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ===================== */}
       {/* TOP PRODUCTS */}
       {/* ===================== */}
       <div
