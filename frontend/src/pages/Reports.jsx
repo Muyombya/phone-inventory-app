@@ -214,14 +214,28 @@ function Reports() {
   }
 
   const {
-    summary,
-    periodAnalytics,
-    daily,
-    weekly,
-    returnsAnalytics,
-    branchReports,
-    topProducts,
-  } = report;
+  summary,
+
+  periodAnalytics,
+
+  daily,
+
+  weekly,
+
+  returnsAnalytics,
+
+  branchReports,
+
+  topProducts,
+
+  // NEW
+  reportBranches,
+
+  replenishmentReport,
+
+  replenishmentSummary,
+
+} = report;
 
   const topBranch =
     branchReports.length >
@@ -572,63 +586,47 @@ function Reports() {
         </h2>
 
         <div
-          className="
-            grid
-            grid-cols-2
-            lg:grid-cols-6
-            gap-3
-          "
-        >
-          <KPI
-            title="Revenue"
-            value={formatCurrency(
-              periodAnalytics.grossRevenue
-            )}
-            color="text-green-600"
-          />
+            className="
+              grid
+              grid-cols-2
+              lg:grid-cols-4
+              gap-3
+            "
+          >
 
-          <KPI
-            title="Returns"
-            value={formatCurrency(
-              periodAnalytics.returnedRevenue
-            )}
-            color="text-red-600"
-          />
+            <KPI
+              title="Revenue"
+              value={formatCurrency(
+                periodAnalytics.grossRevenue
+              )}
+              color="text-green-600"
+            />
 
-          <KPI
-            title="Net Revenue"
-            value={formatCurrency(
-              periodAnalytics.netRevenue
-            )}
-            color="text-blue-600"
-          />
+            <KPI
+              title="Returns"
+              value={formatCurrency(
+                periodAnalytics.returnedRevenue
+              )}
+              color="text-red-600"
+            />
 
-          <KPI
-            title="Transactions"
-            value={
-              periodAnalytics.transactions
-            }
-          />
+            <KPI
+              title="Phones Sold"
+              value={
+                periodAnalytics.phonesSold
+              }
+              color="text-blue-600"
+            />
 
-          <KPI
-            title="Phones Sold"
-            value={
-              periodAnalytics.phonesSold
-            }
-          />
+            <KPI
+              title="Stock Value"
+              value={formatCurrency(
+                summary.inventoryValue
+              )}
+              color="text-[#6b0f1a]"
+            />
 
-          <KPI
-            title="Net Profit"
-            value={
-              isManager
-                ? formatCurrency(
-                    periodAnalytics.netProfit
-                  )
-                : "Hidden"
-            }
-            color="text-indigo-600"
-          />
-        </div>
+          </div>
       </div>
 
       {/* ===================== */}
@@ -703,6 +701,195 @@ function Reports() {
           gap-4
         "
       >
+        {/* ===================== */}
+        {/* REPLENISHMENT REPORT */}
+        {/* ===================== */}
+
+          <div className="bg-white rounded-xl border p-4 shadow-sm mt-6">
+
+            <div className="flex items-center justify-between mb-4">
+
+              <div>
+
+                <h2 className="text-lg font-bold">
+                  Replenishment Report
+                </h2>
+
+                <p className="text-sm text-gray-500">
+                  Models requiring replenishment (Threshold ≤ 3)
+                </p>
+
+              </div>
+
+              <div className="text-sm text-gray-600">
+
+                Total Models:
+                <span className="font-semibold ml-2">
+                  {replenishmentSummary?.totalModels ?? 0}
+                </span>
+
+              </div>
+
+            </div>
+
+            <div className="overflow-x-auto">
+
+              <table className="min-w-full border-collapse">
+
+                <thead>
+
+                  <tr className="bg-gray-100">
+
+                    <th className="border px-3 py-2 text-left">
+                      #
+                    </th>
+
+                    <th className="border px-3 py-2 text-left">
+                      Brand
+                    </th>
+
+                    <th className="border px-3 py-2 text-left">
+                      Model
+                    </th>
+
+                    <th className="border px-3 py-2 text-left">
+                      Storage
+                    </th>
+
+                    <th className="border px-3 py-2 text-left">
+                      RAM
+                    </th>
+
+                    <th className="border px-3 py-2 text-center">
+                      Status
+                    </th>
+
+                    {reportBranches?.map((branch) => (
+
+                      <th
+                        key={branch}
+                        className="border px-3 py-2 text-center"
+                      >
+                        {branch}
+                      </th>
+
+                    ))}
+
+                    <th className="border px-3 py-2 text-center">
+                      Total
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+                <tbody>
+
+                  {replenishmentReport?.length ? (
+
+                    replenishmentReport.map((item) => (
+
+                      <tr key={item.priority}>
+
+                        <td className="border px-3 py-2">
+
+                          {item.priority}
+
+                        </td>
+
+                        <td className="border px-3 py-2">
+
+                          {item.brand}
+
+                        </td>
+
+                        <td className="border px-3 py-2 font-medium">
+
+                          {item.model}
+
+                        </td>
+
+                        <td className="border px-3 py-2">
+
+                          {item.storage}
+
+                        </td>
+
+                        <td className="border px-3 py-2">
+
+                          {item.ram}
+
+                        </td>
+
+                        <td className="border px-3 py-2 text-center">
+
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-semibold
+                            ${
+                              item.status === "Critical"
+                                ? "bg-red-100 text-red-700"
+                                : item.status === "Low"
+                                ? "bg-orange-100 text-orange-700"
+                                : "bg-yellow-100 text-yellow-700"
+                            }`}
+                          >
+
+                            {item.status}
+
+                          </span>
+
+                        </td>
+
+                        {reportBranches.map((branch) => (
+
+                          <td
+                            key={branch}
+                            className="border px-3 py-2 text-center"
+                          >
+
+                            {item.branches?.[branch] ?? 0}
+
+                          </td>
+
+                        ))}
+
+                        <td className="border px-3 py-2 text-center font-bold">
+
+                          {item.total}
+
+                        </td>
+
+                      </tr>
+
+                    ))
+
+                  ) : (
+
+                    <tr>
+
+                      <td
+                        colSpan={
+                          7 +
+                          (reportBranches?.length || 0)
+                        }
+                        className="text-center py-6 text-gray-500"
+                      >
+
+                        No models require replenishment.
+
+                      </td>
+
+                    </tr>
+
+                  )}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </div>
         {/* TODAY */}
         <div
           className="

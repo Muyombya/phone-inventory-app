@@ -8,14 +8,22 @@ const Branch =
   require("../models/Branch");
 
 // =====================================
+// CONFIGURATION
+// =====================================
+
+const REPLENISHMENT_THRESHOLD = 3;
+
+// =====================================
 // GET REPORTS
 // =====================================
+
 const getDashboardReport =
   async (req, res) => {
     try {
       // =========================
       // USER CONTEXT
       // =========================
+
       const isManager =
         req.user.role ===
         "manager";
@@ -26,6 +34,7 @@ const getDashboardReport =
       // =========================
       // DATE FILTERS
       // =========================
+
       const {
         startDate,
         endDate,
@@ -37,7 +46,6 @@ const getDashboardReport =
       let reportStartDate;
       let reportEndDate;
 
-      // CUSTOM RANGE
       if (
         startDate &&
         endDate
@@ -59,8 +67,6 @@ const getDashboardReport =
           999
         );
       } else {
-        // DEFAULT:
-        // CURRENT MONTH
         reportStartDate =
           new Date(
             now.getFullYear(),
@@ -75,6 +81,7 @@ const getDashboardReport =
       // =========================
       // TODAY
       // =========================
+
       const todayStart =
         new Date();
 
@@ -86,8 +93,9 @@ const getDashboardReport =
       );
 
       // =========================
-      // WEEK
+      // LAST 7 DAYS
       // =========================
+
       const weekStart =
         new Date();
 
@@ -99,6 +107,7 @@ const getDashboardReport =
       // =========================
       // LOAD SALES
       // =========================
+
       let sales =
         await Sale.find()
           .populate(
@@ -110,6 +119,7 @@ const getDashboardReport =
       // =========================
       // BRANCH FILTER
       // =========================
+
       if (
         !isManager &&
         userBranchId
@@ -118,8 +128,7 @@ const getDashboardReport =
           sales.filter(
             (sale) =>
               sale.branch &&
-              sale.branch._id
-                ?.toString() ===
+              sale.branch._id?.toString() ===
                 userBranchId
           );
       }
@@ -127,6 +136,7 @@ const getDashboardReport =
       // =========================
       // COMPLETED SALES
       // =========================
+
       const completedSales =
         sales.filter(
           (sale) =>
@@ -148,6 +158,7 @@ const getDashboardReport =
       // =========================
       // RETURNED SALES
       // =========================
+
       const returnedSales =
         sales.filter(
           (sale) =>
@@ -166,8 +177,8 @@ const getDashboardReport =
 
       // =========================
       // EXECUTIVE SUMMARY
-      // FILTERED PERIOD
       // =========================
+
       const grossRevenue =
         completedSales.reduce(
           (
@@ -251,10 +262,10 @@ const getDashboardReport =
             ),
           0
         );
-
-      // =========================
+              // =========================
       // DAILY REPORT
       // =========================
+
       const todayCompleted =
         completedSales.filter(
           (sale) =>
@@ -357,10 +368,11 @@ const getDashboardReport =
             ),
           0
         );
-              // =========================
-      // WEEKLY REPORT
-      // LAST 7 DAYS
+
       // =========================
+      // WEEKLY REPORT
+      // =========================
+
       const weekCompleted =
         completedSales.filter(
           (sale) =>
@@ -466,8 +478,8 @@ const getDashboardReport =
 
       // =========================
       // SELECTED PERIOD
-      // (CUSTOM RANGE OR MONTH)
       // =========================
+
       const periodAnalytics =
         {
           startDate:
@@ -497,11 +509,38 @@ const getDashboardReport =
 
       // =========================
       // INVENTORY
-      // BRANCH SCOPED
       // =========================
+
       let inventoryPhones =
         await Phone.find()
+          .populate(
+            "branch",
+            "name"
+          )
           .lean();
+
+          // =========================
+          // LOAD BRANCHES
+          // =========================
+
+          let branches =
+            await Branch.find()
+              .lean();
+
+          if (
+            !isManager &&
+            userBranchId
+          ) {
+
+            branches =
+              branches.filter(
+                (branch) =>
+                  branch._id
+                    .toString() ===
+                  userBranchId
+              );
+
+          }
 
       if (
         !isManager &&
@@ -510,8 +549,7 @@ const getDashboardReport =
         inventoryPhones =
           inventoryPhones.filter(
             (phone) =>
-              phone.branch
-                ?.toString() ===
+              phone.branch?._id?.toString() ===
               userBranchId
           );
       }
@@ -532,10 +570,283 @@ const getDashboardReport =
             ),
           0
         );
+              // =========================
+      // REPLENISHMENT REPORT
+      // =========================
+
+      const groupedInventory = {};
+
+      inventoryPhones.forEach(
+        (phone) => {
+
+          const brand =
+            String(
+              phone.brand || ""
+            )
+              .trim();
+
+          const model =
+            String(
+              phone.model || ""
+            )
+              .trim();
+
+          const storage =
+            String(
+              phone.storage || ""
+            )
+              .trim();
+
+          const ram =
+            String(
+              phone.ram || ""
+            )
+              .trim();
+
+          const key =
+            `${brand}||${model}||${storage}||${ram}`;
+
+          const branchName =
+            phone.branch?.name ||
+            "Unknown";
+
+          if (
+            !groupedInventory[
+              key
+            ]
+          ) {
+
+            groupedInventory[
+              key
+            ] = {
+
+              brand,
+
+              model,
+
+              storage,
+
+              ram,
+
+              total: 0,
+
+              branches: {},
+
+              stockValue: 0,
+
+            };
+
+          }
+
+          groupedInventory[
+            key
+          ].total++;
+
+          groupedInventory[
+            key
+          ].stockValue +=
+            Number(
+              phone.buyingPrice ||
+                0
+            );
+
+          groupedInventory[
+            key
+          ].branches[
+            branchName
+          ] =
+            (
+              groupedInventory[
+                key
+              ].branches[
+                branchName
+              ] || 0
+            ) + 1;
+
+        }
+      );
 
       // =========================
+      // ENSURE EVERY BRANCH EXISTS
+      // =========================
+
+      branches.forEach(
+        (branch) => {
+
+          Object.values(
+            groupedInventory
+          ).forEach(
+            (
+              item
+            ) => {
+
+              if (
+                item.branches[
+                  branch.name
+                ] ===
+                undefined
+              ) {
+
+                item.branches[
+                  branch.name
+                ] = 0;
+
+              }
+
+            }
+          );
+
+        }
+      );
+
+      // =========================
+      // BUILD REPORT
+      // =========================
+
+      const replenishmentReport =
+        Object.values(
+          groupedInventory
+        )
+          .map(
+            (
+              item
+            ) => {
+
+              let status;
+
+                if (item.total <= 1) {
+
+                  status = "Critical";
+
+                } else if (item.total === 2) {
+
+                  status = "Low";
+
+                } else {
+
+                  status = "Monitor";
+
+                }
+
+              return {
+
+                ...item,
+
+                status,
+
+              };
+
+            }
+          )
+          .filter(
+            (
+              item
+            ) =>
+              item.total <=
+              REPLENISHMENT_THRESHOLD
+          )
+          .sort(
+            (
+              a,
+              b
+            ) => {
+
+              if (
+                a.total !==
+                b.total
+              ) {
+
+                return (
+                  a.total -
+                  b.total
+                );
+
+              }
+
+              return (
+                a.brand.localeCompare(
+                  b.brand
+                ) ||
+
+                a.model.localeCompare(
+                  b.model
+                )
+              );
+
+            }
+          )
+          .map(
+            (
+              item,
+              index
+            ) => ({
+
+              priority:
+                index + 1,
+
+              ...item,
+
+            })
+          );
+
+      // =========================
+      // REPLENISHMENT SUMMARY
+      // =========================
+
+      const replenishmentSummary =
+        {
+
+          critical:
+
+            replenishmentReport.filter(
+              (
+                item
+              ) =>
+                item.status ===
+                "Critical"
+            ).length,
+
+          low:
+
+            replenishmentReport.filter(
+              (
+                item
+              ) =>
+                item.status ===
+                "Low"
+            ).length,
+
+          monitor:
+
+            replenishmentReport.filter(
+              (
+                item
+              ) =>
+                item.status ===
+                "Monitor"
+            ).length,
+
+          totalModels:
+
+            replenishmentReport.length,
+
+          estimatedStockValue:
+
+            replenishmentReport.reduce(
+              (
+                total,
+                item
+              ) =>
+                total +
+                item.stockValue,
+              0
+            ),
+
+        };
+              // =========================
       // RETURNS ANALYTICS
       // =========================
+
       const averageReturnValue =
         returnsCount > 0
           ? Math.round(
@@ -555,38 +866,19 @@ const getDashboardReport =
           averageReturnValue,
         };
 
-      // =========================
-      // BRANCH PERFORMANCE
-      // =========================
-      let branches =
-        await Branch.find()
-          .lean();
-
-      if (
-        !isManager &&
-        userBranchId
-      ) {
-        branches =
-          branches.filter(
-            (branch) =>
-              branch._id.toString() ===
-              userBranchId
-          );
-      }
-
       const branchReports =
         [];
 
       for (const branch of branches) {
+
         const branchCompleted =
           completedSales.filter(
             (
               sale
             ) =>
               sale.branch &&
-              sale.branch._id
-                ?.toString() ===
-                branch._id.toString()
+              sale.branch._id?.toString() ===
+              branch._id.toString()
           );
 
         const branchReturned =
@@ -595,9 +887,8 @@ const getDashboardReport =
               sale
             ) =>
               sale.branch &&
-              sale.branch._id
-                ?.toString() ===
-                branch._id.toString()
+              sale.branch._id?.toString() ===
+              branch._id.toString()
           );
 
         const branchRevenue =
@@ -661,7 +952,7 @@ const getDashboardReport =
             (
               phone
             ) =>
-              phone.branch?.toString() ===
+              phone.branch?._id?.toString() ===
               branch._id.toString()
           );
 
@@ -680,6 +971,7 @@ const getDashboardReport =
           );
 
         branchReports.push({
+
           branchId:
             branch._id,
 
@@ -728,32 +1020,46 @@ const getDashboardReport =
             ),
 
           stockValue,
+
         });
+
       }
-            // =========================
-      // TOP PRODUCTS
-      // COMPLETED SALES ONLY
+
       // =========================
-      const productMap =
-        {};
+      // BRANCH NAMES
+      // FOR FRONTEND TABLE
+      // =========================
+
+      const reportBranches =
+        branches
+          .map(
+            (
+              branch
+            ) =>
+              branch.name
+          )
+          .sort();
+                // =========================
+      // TOP PRODUCTS
+      // =========================
+
+      const productMap = {};
 
       completedSales.forEach(
         (sale) => {
+
           sale.items?.forEach(
-            (
-              item
-            ) => {
+            (item) => {
+
               const key =
                 `${item.brand} ${item.model}`;
 
               if (
-                !productMap[
-                  key
-                ]
+                !productMap[key]
               ) {
-                productMap[
-                  key
-                ] = {
+
+                productMap[key] = {
+
                   brand:
                     item.brand,
 
@@ -765,30 +1071,28 @@ const getDashboardReport =
                   revenue: 0,
 
                   profit: 0,
+
                 };
+
               }
 
-              productMap[
-                key
-              ].sold += 1;
+              productMap[key].sold++;
 
-              productMap[
-                key
-              ].revenue +=
+              productMap[key].revenue +=
                 Number(
                   item.finalPrice ||
                     0
                 );
 
-              productMap[
-                key
-              ].profit +=
+              productMap[key].profit +=
                 Number(
                   item.profit ||
                     0
                 );
+
             }
           );
+
         }
       );
 
@@ -812,8 +1116,11 @@ const getDashboardReport =
       // =========================
       // BUILD RESPONSE
       // =========================
+
       const reportData = {
+
         summary: {
+
           grossRevenue,
 
           returnedRevenue,
@@ -835,12 +1142,13 @@ const getDashboardReport =
           inventoryCount,
 
           inventoryValue,
+
         },
 
-        // NEW
         periodAnalytics,
 
         daily: {
+
           grossRevenue:
             todayGrossRevenue,
 
@@ -867,9 +1175,11 @@ const getDashboardReport =
 
           phonesSold:
             todayPhonesSold,
+
         },
 
         weekly: {
+
           grossRevenue:
             weekGrossRevenue,
 
@@ -896,6 +1206,7 @@ const getDashboardReport =
 
           phonesSold:
             weekPhonesSold,
+
         },
 
         returnsAnalytics,
@@ -903,16 +1214,27 @@ const getDashboardReport =
         branchReports,
 
         topProducts,
+
+        // =====================
+        // NEW
+        // =====================
+
+        reportBranches,
+
+        replenishmentReport,
+
+        replenishmentSummary,
+
       };
 
       // =========================
       // PROFIT SECURITY
-      // NON MANAGERS
       // =========================
+
       if (
         !isManager
       ) {
-        // SUMMARY
+
         reportData.summary.grossProfit =
           null;
 
@@ -922,7 +1244,6 @@ const getDashboardReport =
         reportData.summary.netProfit =
           null;
 
-        // PERIOD
         reportData.periodAnalytics.grossProfit =
           null;
 
@@ -932,7 +1253,6 @@ const getDashboardReport =
         reportData.periodAnalytics.netProfit =
           null;
 
-        // DAILY
         reportData.daily.grossProfit =
           null;
 
@@ -942,7 +1262,6 @@ const getDashboardReport =
         reportData.daily.netProfit =
           null;
 
-        // WEEKLY
         reportData.weekly.grossProfit =
           null;
 
@@ -952,29 +1271,29 @@ const getDashboardReport =
         reportData.weekly.netProfit =
           null;
 
-        // RETURNS
         reportData.returnsAnalytics.returnedProfit =
           null;
 
-        // PRODUCTS
         reportData.topProducts =
           reportData.topProducts.map(
             (
               product
             ) => ({
+
               ...product,
 
               profit:
                 null,
+
             })
           );
 
-        // BRANCHES
         reportData.branchReports =
           reportData.branchReports.map(
             (
               branch
             ) => ({
+
               ...branch,
 
               grossProfit:
@@ -985,33 +1304,49 @@ const getDashboardReport =
 
               netProfit:
                 null,
+
             })
           );
+
       }
 
       // =========================
-      // FINAL RESPONSE
+      // RESPONSE
       // =========================
+
       res.json(
         reportData
       );
+
     } catch (
       error
     ) {
+
       console.log(
         error
       );
 
-      res.status(500).json({
-        message:
-          "Failed to generate reports",
-      });
+      res
+        .status(
+          500
+        )
+        .json({
+
+          message:
+            "Failed to generate reports",
+
+        });
+
     }
+
   };
 
 // =====================================
 // EXPORTS
 // =====================================
+
 module.exports = {
+
   getDashboardReport,
+
 };
