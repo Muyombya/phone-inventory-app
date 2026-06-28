@@ -629,70 +629,9 @@ function Reports() {
           </div>
       </div>
 
-      {/* ===================== */}
-      {/* KPI RIBBON */}
-      {/* ===================== */}
-      <div
-        className="
-          grid
-          grid-cols-2
-          xl:grid-cols-6
-          gap-3
-        "
-      >
-        <KPI
-          title="Gross Revenue"
-          value={formatCurrency(
-            summary.grossRevenue
-          )}
-          color="text-green-600"
-        />
-
-        <KPI
-          title="Returns"
-          value={formatCurrency(
-            summary.returnedRevenue
-          )}
-          color="text-red-600"
-        />
-
-        <KPI
-          title="Net Revenue"
-          value={formatCurrency(
-            summary.netRevenue
-          )}
-          color="text-blue-600"
-        />
-
-        <KPI
-          title="Net Profit"
-          value={
-            isManager
-              ? formatCurrency(
-                  summary.netProfit
-                )
-              : "Hidden"
-          }
-          color="text-indigo-600"
-        />
-
-        <KPI
-          title="Transactions"
-          value={
-            summary.transactions
-          }
-        />
-
-        <KPI
-          title="Stock Value"
-          value={formatCurrency(
-            summary.inventoryValue
-          )}
-        />
-      </div>
             {/* ===================== */}
-      {/* TODAY / WEEK */}
-      {/* ===================== */}
+            {/* TODAY / WEEK */}
+            {/* ===================== */}
       <div
         className="
           grid
@@ -705,7 +644,16 @@ function Reports() {
         {/* REPLENISHMENT REPORT */}
         {/* ===================== */}
 
-          <div className="bg-white rounded-xl border p-4 shadow-sm mt-6">
+          <div
+            className="
+              bg-white
+              rounded-xl
+              border
+              p-6
+              shadow-sm
+              mt-6
+            "
+          >
 
             <div className="flex items-center justify-between mb-4">
 
@@ -789,7 +737,16 @@ function Reports() {
 
                     replenishmentReport.map((item) => (
 
-                      <tr key={item.priority}>
+                      <tr
+                          key={item.priority}
+                          className={
+                            item.status === "Critical"
+                              ? "bg-red-50"
+                              : item.status === "Low"
+                              ? "bg-orange-50"
+                              : "bg-yellow-50"
+                          }
+                        >
 
                         <td className="border px-3 py-2">
 
@@ -853,7 +810,22 @@ function Reports() {
 
                         ))}
 
-                        <td className="border px-3 py-2 text-center font-bold">
+                        <td
+                          className={`
+                            border
+                            px-3
+                            py-2
+                            text-center
+                            font-bold
+                            ${
+                              item.total === 1
+                                ? "text-red-700"
+                                : item.total === 2
+                                ? "text-orange-700"
+                                : "text-yellow-700"
+                            }
+                          `}
+                        >
 
                           {item.total}
 
@@ -890,113 +862,6 @@ function Reports() {
             </div>
 
           </div>
-        {/* TODAY */}
-        <div
-          className="
-            bg-white
-            rounded-xl
-            border
-            p-4
-            shadow-sm
-          "
-        >
-          <h2
-            className="
-              text-base
-              font-bold
-              mb-3
-            "
-          >
-            Today
-          </h2>
-
-          <div
-            className="
-              space-y-2
-              text-sm
-            "
-          >
-            <div className="flex justify-between">
-              <span>
-                Gross Revenue
-              </span>
-
-              <span className="font-semibold">
-                {formatCurrency(
-                  daily.grossRevenue
-                )}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>
-                Returned Revenue
-              </span>
-
-              <span className="font-semibold text-red-600">
-                {formatCurrency(
-                  daily.returnedRevenue
-                )}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>
-                Net Revenue
-              </span>
-
-              <span className="font-semibold text-green-600">
-                {formatCurrency(
-                  daily.netRevenue
-                )}
-              </span>
-            </div>
-
-            {isManager && (
-              <div className="flex justify-between">
-                <span>
-                  Net Profit
-                </span>
-
-                <span className="font-semibold text-blue-600">
-                  {formatCurrency(
-                    daily.netProfit
-                  )}
-                </span>
-              </div>
-            )}
-
-            <div className="flex justify-between">
-              <span>
-                Transactions
-              </span>
-
-              <span className="font-semibold">
-                {daily.transactions}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>
-                Phones Sold
-              </span>
-
-              <span className="font-semibold">
-                {daily.phonesSold}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>
-                Returns
-              </span>
-
-              <span className="font-semibold text-red-600">
-                {daily.returns}
-              </span>
-            </div>
-          </div>
-        </div>
 
         {/* LAST 7 DAYS */}
         <div
@@ -1110,14 +975,7 @@ function Reports() {
       {/* ===================== */}
       {/* RETURNS + TOP BRANCH */}
       {/* ===================== */}
-      <div
-        className="
-          grid
-          grid-cols-1
-          lg:grid-cols-2
-          gap-4
-        "
-      >
+     <div className="space-y-4">
         {/* RETURNS */}
         <div
           className="
@@ -1183,73 +1041,6 @@ function Reports() {
             </div>
           </div>
         </div>
-
-        {/* TOP BRANCH */}
-        {topBranch && (
-          <div
-            className="
-              bg-white
-              rounded-xl
-              border
-              p-3
-              shadow-sm
-            "
-          >
-            <h2
-              className="
-                text-base
-                font-bold
-                mb-3
-              "
-            >
-              🏆 Top Performing Branch
-            </h2>
-
-            <h3
-              className="
-                text-lg
-                font-bold
-                text-[#6b0f1a]
-              "
-            >
-              {
-                topBranch.branchName
-              }
-            </h3>
-
-            <div
-              className="
-                mt-3
-                space-y-1
-                text-sm
-              "
-            >
-              <p>
-                Revenue:
-                {" "}
-                {formatCurrency(
-                  topBranch.netRevenue
-                )}
-              </p>
-
-              <p>
-                Phones Sold:
-                {" "}
-                {
-                  topBranch.phonesSold
-                }
-              </p>
-
-              <p>
-                Stock Value:
-                {" "}
-                {formatCurrency(
-                  topBranch.stockValue
-                )}
-              </p>
-            </div>
-          </div>
-        )}
       </div>
             {/* ===================== */}
       {/* TOP PRODUCTS */}
