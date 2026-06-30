@@ -10,8 +10,6 @@ function BulkInventoryUpdate() {
   // ==========================
   // STATE
   // ==========================
-  const [branches, setBranches] =
-    useState([]);
 
   const [options, setOptions] =
   useState([]);
@@ -32,51 +30,21 @@ function BulkInventoryUpdate() {
     setCurrentSellingPrice,
   ] = useState("");
 
-  const [formData, setFormData] =
-    useState({
+  const [formData, setFormData] = useState({
 
-      branch: "",
+  brand: "",
 
-      brand: "",
+  model: "",
 
-      model: "",
+  ram: "",
 
-      ram: "",
+  storage: "",
 
-      storage: "",
+  buyingPrice: "",
 
-      buyingPrice: "",
+  sellingPrice: "",
 
-      sellingPrice: "",
-
-    });
-
-  // ==========================
-  // FETCH BRANCHES
-  // ==========================
-  async function fetchBranches() {
-
-    try {
-
-      const response =
-        await api.get(
-          "/branches"
-        );
-
-      setBranches(
-        response.data
-      );
-
-    } catch (error) {
-
-      console.log(
-        "Branch fetch error:",
-        error
-      );
-
-    }
-
-  }
+});
 
   // ==========================
 // FETCH BULK OPTIONS
@@ -111,11 +79,8 @@ async function fetchBulkOptions() {
 function handleChange(e) {
 
   const {
-
     name,
-
     value,
-
   } = e.target;
 
   setFormData((prev) => {
@@ -127,18 +92,6 @@ function handleChange(e) {
       [name]: value,
 
     };
-
-    if (name === "branch") {
-
-      updated.brand = "";
-
-      updated.model = "";
-
-      updated.ram = "";
-
-      updated.storage = "";
-
-    }
 
     if (name === "brand") {
 
@@ -168,108 +121,105 @@ function handleChange(e) {
 
   });
 
+  setMatchingCount(null);
+
+  setCurrentBuyingPrice("");
+
+  setCurrentSellingPrice("");
+
 }
 
   // ==========================
-  // LOAD INVENTORY PREVIEW
-  // ==========================
-  async function loadPreview() {
+// LOAD INVENTORY PREVIEW
+// ==========================
+async function loadPreview() {
 
-    const {
-      branch,
-      brand,
-      model,
-      ram,
-      storage,
-    } = formData;
+  const {
 
-    if (
+    brand,
 
-      !branch ||
+    model,
 
-      !brand ||
+    ram,
 
-      !model ||
+    storage,
 
-      !ram ||
+  } = formData;
 
-      !storage
+  if (
 
-    ) {
+    !brand ||
 
-      setMatchingCount(
-        null
-      );
+    !model ||
 
-      setCurrentBuyingPrice(
-        ""
-      );
+    !ram ||
 
-      setCurrentSellingPrice(
-        ""
-      );
+    !storage
 
-      return;
+  ) {
 
-    }
+    setMatchingCount(null);
 
-    try {
+    setCurrentBuyingPrice("");
 
-      const response =
-        await api.get(
+    setCurrentSellingPrice("");
 
-          "/phones/bulk-preview",
-
-          {
-
-            params: {
-
-                branch,
-
-                brand: brand.trim(),
-
-                model: model.trim(),
-
-                ram: ram.trim(),
-
-                storage: storage.trim(),
-
-              },
-          }
-
-        );
-
-      setMatchingCount(
-
-        response.data.count
-
-      );
-
-      setCurrentBuyingPrice(
-
-        response.data.buyingPrice
-
-      );
-
-      setCurrentSellingPrice(
-
-        response.data.sellingPrice
-
-      );
-
-    } catch (error) {
-
-      console.log(error);
-
-      setMatchingCount(0);
-
-      setCurrentBuyingPrice("");
-
-      setCurrentSellingPrice("");
-
-    }
+    return;
 
   }
+
+  try {
+
+    const response =
+      await api.get(
+
+        "/phones/bulk-preview",
+
+        {
+
+          params: {
+
+            brand:
+              brand.trim(),
+
+            model:
+              model.trim(),
+
+            ram:
+              ram.trim(),
+
+            storage:
+              storage.trim(),
+
+          },
+
+        }
+
+      );
+
+    setMatchingCount(
+      response.data.count
+    );
+
+    setCurrentBuyingPrice(
+      response.data.buyingPrice
+    );
+
+    setCurrentSellingPrice(
+      response.data.sellingPrice
+    );
+
+  } catch (error) {
+
+    setMatchingCount(0);
+
+    setCurrentBuyingPrice("");
+
+    setCurrentSellingPrice("");
+
+  }
+
+}
 
 // ==========================
 // HANDLE SUBMIT
@@ -295,7 +245,9 @@ async function handleSubmit(e) {
   }
 
   const confirmed = window.confirm(
+
     `You are about to update ${matchingCount} phone(s).\n\nDo you want to continue?`
+
   );
 
   if (!confirmed) {
@@ -306,15 +258,23 @@ async function handleSubmit(e) {
 
   const payload = {
 
-    ...formData,
+    brand:
+      formData.brand.trim(),
 
-    brand: formData.brand.trim(),
+    model:
+      formData.model.trim(),
 
-    model: formData.model.trim(),
+    ram:
+      formData.ram.trim(),
 
-    ram: formData.ram.trim(),
+    storage:
+      formData.storage.trim(),
 
-    storage: formData.storage.trim(),
+    buyingPrice:
+      formData.buyingPrice,
+
+    sellingPrice:
+      formData.sellingPrice,
 
   };
 
@@ -322,36 +282,25 @@ async function handleSubmit(e) {
 
   try {
 
-    const response = await api.put(
-      "/phones/bulk-update",
-      payload
-    );
+    const response =
+      await api.put(
+        "/phones/bulk-update",
+        payload
+      );
 
     alert(response.data.message);
 
-    setFormData({
+setFormData((prev) => ({
 
-      branch: "",
+  ...prev,
 
-      brand: "",
+  buyingPrice: "",
 
-      model: "",
+  sellingPrice: "",
 
-      ram: "",
+}));
 
-      storage: "",
-
-      buyingPrice: "",
-
-      sellingPrice: "",
-
-    });
-
-    setMatchingCount(null);
-
-    setCurrentBuyingPrice("");
-
-    setCurrentSellingPrice("");
+await loadPreview();
 
   } catch (error) {
 
@@ -378,19 +327,15 @@ async function handleSubmit(e) {
   // ==========================
  useEffect(() => {
 
-  fetchBranches();
-
   fetchBulkOptions();
 
 }, []);
 
-  useEffect(() => {
+ useEffect(() => {
 
     loadPreview();
 
-  }, [
-
-    formData.branch,
+}, [
 
     formData.brand,
 
@@ -400,8 +345,7 @@ async function handleSubmit(e) {
 
     formData.storage,
 
-  ]);
-
+]);
   return (
      <div className="p-5 max-w-4xl mx-auto">
 
@@ -424,227 +368,203 @@ async function handleSubmit(e) {
         onSubmit={handleSubmit}
         className="bg-white rounded-xl shadow-lg p-6 space-y-6"
       >
+<div>
 
-        {/* BRANCH */}
-        <div>
+  <label className="block font-medium mb-2">
+    Brand
+  </label>
 
-          <label className="block font-medium mb-2">
-            Branch
-          </label>
+  <select
+    name="brand"
+    value={formData.brand}
+    onChange={handleChange}
+    className="border rounded-lg p-4 w-full"
+    required
+  >
 
-          <select
-            name="branch"
-            value={formData.branch}
-            onChange={handleChange}
-            className="border rounded-lg p-4 w-full"
-            required
-          >
+    <option value="">
+      Select Brand
+    </option>
 
-            <option value="">
-              Select Branch
-            </option>
+    {[...new Set(
 
-            {branches.map((branch) => (
+      options.map(option =>
 
-              <option
-                key={branch._id}
-                value={branch._id}
-              >
-                {branch.name}
-              </option>
+        option.brand
 
-            ))}
+      )
 
-          </select>
+    )].map(brand => (
 
-        </div>
+      <option
+        key={brand}
+        value={brand}
+      >
+        {brand}
+      </option>
 
-        {/* BRAND */}
-                {/* BRAND */}
-        <div>
+    ))}
 
-          <label className="block font-medium mb-2">
-            Brand
-          </label>
+  </select>
 
-          <select
-            name="brand"
-            value={formData.brand}
-            onChange={handleChange}
-            className="border rounded-lg p-4 w-full"
-            required
-          >
+</div>
 
-            <option value="">
-              Select Brand
-            </option>
+{/* MODEL */}
+<div>
 
-            {[...new Set(
-              options
-                .filter(option =>
-                  option.branchId === formData.branch
-                )
-                .map(option =>
-                  option.brand
-                )
-            )].map(brand => (
+  <label className="block font-medium mb-2">
+    Model
+  </label>
 
-              <option
-                key={brand}
-                value={brand}
-              >
-                {brand}
-              </option>
+  <select
+    name="model"
+    value={formData.model}
+    onChange={handleChange}
+    className="border rounded-lg p-4 w-full"
+    required
+  >
 
-            ))}
+    <option value="">
+      Select Model
+    </option>
 
-          </select>
+    {[...new Set(
 
-        </div>
+      options
 
-        {/* MODEL */}
-        <div>
+        .filter(option =>
 
-          <label className="block font-medium mb-2">
-            Model
-          </label>
+          option.brand === formData.brand
 
-          <select
-            name="model"
-            value={formData.model}
-            onChange={handleChange}
-            className="border rounded-lg p-4 w-full"
-            required
-          >
+        )
 
-            <option value="">
-              Select Model
-            </option>
+        .map(option =>
 
-            {[...new Set(
-              options
-                .filter(option =>
+          option.model
 
-                  option.branchId === formData.branch &&
+        )
 
-                  option.brand === formData.brand
+    )].map(model => (
 
-                )
-                .map(option =>
-                  option.model
-                )
-            )].map(model => (
+      <option
+        key={model}
+        value={model}
+      >
+        {model}
+      </option>
 
-              <option
-                key={model}
-                value={model}
-              >
-                {model}
-              </option>
+    ))}
 
-            ))}
+  </select>
 
-          </select>
+</div>
 
-        </div>
+{/* RAM */}
+<div>
 
-        {/* RAM */}
-        <div>
+  <label className="block font-medium mb-2">
+    RAM
+  </label>
 
-          <label className="block font-medium mb-2">
-            RAM
-          </label>
+  <select
+    name="ram"
+    value={formData.ram}
+    onChange={handleChange}
+    className="border rounded-lg p-4 w-full"
+    required
+  >
 
-          <select
-            name="ram"
-            value={formData.ram}
-            onChange={handleChange}
-            className="border rounded-lg p-4 w-full"
-            required
-          >
+    <option value="">
+      Select RAM
+    </option>
 
-            <option value="">
-              Select RAM
-            </option>
+    {[...new Set(
 
-            {[...new Set(
-              options
-                .filter(option =>
+      options
 
-                  option.branchId === formData.branch &&
+        .filter(option =>
 
-                  option.brand === formData.brand &&
+          option.brand === formData.brand &&
 
-                  option.model === formData.model
+          option.model === formData.model
 
-                )
-                .map(option =>
-                  option.ram
-                )
-            )].map(ram => (
+        )
 
-              <option
-                key={ram}
-                value={ram}
-              >
-                {ram}
-              </option>
+        .map(option =>
 
-            ))}
+          option.ram
 
-          </select>
+        )
 
-        </div>
+    )].map(ram => (
 
-        {/* STORAGE */}
-        <div>
+      <option
+        key={ram}
+        value={ram}
+      >
+        {ram}
+      </option>
 
-          <label className="block font-medium mb-2">
-            Storage
-          </label>
+    ))}
 
-          <select
-            name="storage"
-            value={formData.storage}
-            onChange={handleChange}
-            className="border rounded-lg p-4 w-full"
-            required
-          >
+  </select>
 
-            <option value="">
-              Select Storage
-            </option>
+</div>
 
-            {[...new Set(
-              options
-                .filter(option =>
+{/* STORAGE */}
+<div>
 
-                  option.branchId === formData.branch &&
+  <label className="block font-medium mb-2">
+    Storage
+  </label>
 
-                  option.brand === formData.brand &&
+  <select
+    name="storage"
+    value={formData.storage}
+    onChange={handleChange}
+    className="border rounded-lg p-4 w-full"
+    required
+  >
 
-                  option.model === formData.model &&
+    <option value="">
+      Select Storage
+    </option>
 
-                  option.ram === formData.ram
+    {[...new Set(
 
-                )
-                .map(option =>
-                  option.storage
-                )
-            )].map(storage => (
+      options
 
-              <option
-                key={storage}
-                value={storage}
-              >
-                {storage}
-              </option>
+        .filter(option =>
 
-            ))}
+          option.brand === formData.brand &&
 
-          </select>
+          option.model === formData.model &&
 
-        </div>
+          option.ram === formData.ram
+
+        )
+
+        .map(option =>
+
+          option.storage
+
+        )
+
+    )].map(storage => (
+
+      <option
+        key={storage}
+        value={storage}
+      >
+        {storage}
+      </option>
+
+    ))}
+
+  </select>
+
+</div>
+
 
         {/* MATCHING INVENTORY */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
@@ -805,7 +725,6 @@ async function handleSubmit(e) {
 
               setFormData({
 
-                branch: "",
                 brand: "",
                 model: "",
                 ram: "",

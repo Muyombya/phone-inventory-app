@@ -363,14 +363,14 @@ const updatePhone =
     }
   };
 
-  // ===================================
+// ===================================
 // BULK INVENTORY UPDATE
 // ===================================
 const bulkInventoryUpdate = async (req, res) => {
+
   try {
 
     const {
-      branch,
       brand,
       model,
       ram,
@@ -392,9 +392,7 @@ const bulkInventoryUpdate = async (req, res) => {
     // =========================
     // VALIDATION
     // =========================
-
     if (
-      !branch ||
       !brand ||
       !model ||
       !ram ||
@@ -403,7 +401,7 @@ const bulkInventoryUpdate = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Branch, Brand, Model, RAM and Storage are required.",
+          "Brand, Model, RAM and Storage are required.",
       });
     }
 
@@ -422,9 +420,7 @@ const bulkInventoryUpdate = async (req, res) => {
     // =========================
     // FIND MATCHING PHONES
     // =========================
-
     const filter = {
-      branch,
       brand,
       model,
       ram,
@@ -434,7 +430,7 @@ const bulkInventoryUpdate = async (req, res) => {
     const phones =
       await Phone.find(filter);
 
-    if (!phones.length) {
+    if (phones.length === 0) {
       return res.status(404).json({
         success: false,
         message:
@@ -445,7 +441,6 @@ const bulkInventoryUpdate = async (req, res) => {
     // =========================
     // BUILD UPDATE OBJECT
     // =========================
-
     const updateData = {
       sellingPrice,
     };
@@ -462,26 +457,21 @@ const bulkInventoryUpdate = async (req, res) => {
     // =========================
     // UPDATE INVENTORY
     // =========================
-
     const result =
       await Phone.updateMany(
         filter,
         {
-          $set:
-            updateData,
+          $set: updateData,
         }
       );
 
     // =========================
     // AUDIT LOG
     // =========================
-
     await logAudit({
 
       user:
         req.user.id,
-
-      branch,
 
       action:
         "BULK_INVENTORY_UPDATE",
@@ -491,6 +481,7 @@ const bulkInventoryUpdate = async (req, res) => {
 
       description:
         `Bulk inventory update for ${brand} ${model} (${ram}/${storage}). Updated ${result.modifiedCount} phones.`,
+
     });
 
     return res.json({
@@ -502,6 +493,7 @@ const bulkInventoryUpdate = async (req, res) => {
 
       message:
         `${result.modifiedCount} phones updated successfully.`,
+
     });
 
   } catch (error) {
@@ -514,9 +506,11 @@ const bulkInventoryUpdate = async (req, res) => {
 
       message:
         "Server error",
+
     });
 
   }
+
 };
 
 // ===================================
@@ -544,7 +538,6 @@ const getBulkInventoryPreview =
       }
 
       const {
-        branch,
         brand,
         model,
         ram,
@@ -555,7 +548,6 @@ const getBulkInventoryPreview =
       // VALIDATION
       // =========================
       if (
-        !branch ||
         !brand ||
         !model ||
         !ram ||
@@ -569,7 +561,8 @@ const getBulkInventoryPreview =
             success: false,
 
             message:
-              "Branch, Brand, Model, RAM and Storage are required.",
+              "Brand, Model, RAM and Storage are required.",
+
           });
 
       }
@@ -579,8 +572,6 @@ const getBulkInventoryPreview =
       // =========================
       const phones =
         await Phone.find({
-
-          branch,
 
           brand,
 
@@ -606,6 +597,7 @@ const getBulkInventoryPreview =
 
             message:
               "No matching phones found.",
+
           });
 
       }
@@ -630,9 +622,7 @@ const getBulkInventoryPreview =
 
     } catch (error) {
 
-      console.log(
-        error
-      );
+      console.log(error);
 
       return res
         .status(500)
@@ -642,6 +632,7 @@ const getBulkInventoryPreview =
 
           message:
             "Server error",
+
         });
 
     }
@@ -655,6 +646,9 @@ const getBulkOptions = async (req, res) => {
 
   try {
 
+    // =========================
+    // MANAGER ONLY
+    // =========================
     if (req.user.role !== "manager") {
       return res.status(403).json({
         success: false,
@@ -664,18 +658,14 @@ const getBulkOptions = async (req, res) => {
 
     const phones = await Phone.find(
       {},
-      "branch brand model ram storage"
-    )
-      .populate("branch", "name")
-      .lean();
+      "brand model ram storage"
+    ).lean();
 
     const unique = new Map();
 
     phones.forEach((phone) => {
 
       const key = [
-
-        phone.branch?._id,
 
         phone.brand,
 
@@ -691,25 +681,19 @@ const getBulkOptions = async (req, res) => {
 
         unique.set(key, {
 
-  branchId:
-    phone.branch?._id?.toString(),
+          brand:
+            phone.brand,
 
-  branchName:
-    phone.branch?.name,
+          model:
+            phone.model,
 
-  brand:
-    phone.brand,
+          ram:
+            phone.ram,
 
-  model:
-    phone.model,
+          storage:
+            phone.storage,
 
-  ram:
-    phone.ram,
-
-  storage:
-    phone.storage,
-
-});
+        });
 
       }
 
@@ -725,13 +709,40 @@ const getBulkOptions = async (req, res) => {
           unique.values()
         )
 
-        .sort((a, b) =>
+        .sort((a, b) => {
 
-          a.brand.localeCompare(
-            b.brand
-          )
+          const brandCompare =
+            a.brand.localeCompare(
+              b.brand
+            );
 
-        ),
+          if (brandCompare !== 0) {
+            return brandCompare;
+          }
+
+          const modelCompare =
+            a.model.localeCompare(
+              b.model
+            );
+
+          if (modelCompare !== 0) {
+            return modelCompare;
+          }
+
+          const ramCompare =
+            a.ram.localeCompare(
+              b.ram
+            );
+
+          if (ramCompare !== 0) {
+            return ramCompare;
+          }
+
+          return a.storage.localeCompare(
+            b.storage
+          );
+
+        }),
 
     });
 
