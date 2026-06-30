@@ -362,6 +362,396 @@ const updatePhone =
         });
     }
   };
+
+  // ===================================
+// BULK INVENTORY UPDATE
+// ===================================
+const bulkInventoryUpdate = async (req, res) => {
+  try {
+
+    const {
+      branch,
+      brand,
+      model,
+      ram,
+      storage,
+      buyingPrice,
+      sellingPrice,
+    } = req.body;
+
+    // =========================
+    // MANAGER ONLY
+    // =========================
+    if (req.user.role !== "manager") {
+      return res.status(403).json({
+        success: false,
+        message: "Managers only",
+      });
+    }
+
+    // =========================
+    // VALIDATION
+    // =========================
+
+    if (
+      !branch ||
+      !brand ||
+      !model ||
+      !ram ||
+      !storage
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Branch, Brand, Model, RAM and Storage are required.",
+      });
+    }
+
+    if (
+      sellingPrice === undefined ||
+      sellingPrice === null ||
+      sellingPrice === ""
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Selling Price is required.",
+      });
+    }
+
+    // =========================
+    // FIND MATCHING PHONES
+    // =========================
+
+    const filter = {
+      branch,
+      brand,
+      model,
+      ram,
+      storage,
+    };
+
+    const phones =
+      await Phone.find(filter);
+
+    if (!phones.length) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "No matching phones found.",
+      });
+    }
+
+    // =========================
+    // BUILD UPDATE OBJECT
+    // =========================
+
+    const updateData = {
+      sellingPrice,
+    };
+
+    if (
+      buyingPrice !== undefined &&
+      buyingPrice !== null &&
+      buyingPrice !== ""
+    ) {
+      updateData.buyingPrice =
+        buyingPrice;
+    }
+
+    // =========================
+    // UPDATE INVENTORY
+    // =========================
+
+    const result =
+      await Phone.updateMany(
+        filter,
+        {
+          $set:
+            updateData,
+        }
+      );
+
+    // =========================
+    // AUDIT LOG
+    // =========================
+
+    await logAudit({
+
+      user:
+        req.user.id,
+
+      branch,
+
+      action:
+        "BULK_INVENTORY_UPDATE",
+
+      entityType:
+        "Phone",
+
+      description:
+        `Bulk inventory update for ${brand} ${model} (${ram}/${storage}). Updated ${result.modifiedCount} phones.`,
+    });
+
+    return res.json({
+
+      success: true,
+
+      updatedCount:
+        result.modifiedCount,
+
+      message:
+        `${result.modifiedCount} phones updated successfully.`,
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    return res.status(500).json({
+
+      success: false,
+
+      message:
+        "Server error",
+    });
+
+  }
+};
+
+// ===================================
+// BULK INVENTORY PREVIEW
+// ===================================
+const getBulkInventoryPreview =
+  async (req, res) => {
+
+    try {
+
+      // =========================
+      // MANAGER ONLY
+      // =========================
+      if (
+        req.user.role !==
+        "manager"
+      ) {
+        return res
+          .status(403)
+          .json({
+            success: false,
+            message:
+              "Managers only",
+          });
+      }
+
+      const {
+        branch,
+        brand,
+        model,
+        ram,
+        storage,
+      } = req.query;
+
+      // =========================
+      // VALIDATION
+      // =========================
+      if (
+        !branch ||
+        !brand ||
+        !model ||
+        !ram ||
+        !storage
+      ) {
+
+        return res
+          .status(400)
+          .json({
+
+            success: false,
+
+            message:
+              "Branch, Brand, Model, RAM and Storage are required.",
+          });
+
+      }
+
+      // =========================
+      // FIND MATCHING PHONES
+      // =========================
+      const phones =
+        await Phone.find({
+
+          branch,
+
+          brand,
+
+          model,
+
+          ram,
+
+          storage,
+
+        });
+
+      if (
+        phones.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+
+            success: false,
+
+            count: 0,
+
+            message:
+              "No matching phones found.",
+          });
+
+      }
+
+      const firstPhone =
+        phones[0];
+
+      return res.json({
+
+        success: true,
+
+        count:
+          phones.length,
+
+        buyingPrice:
+          firstPhone.buyingPrice,
+
+        sellingPrice:
+          firstPhone.sellingPrice,
+
+      });
+
+    } catch (error) {
+
+      console.log(
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+
+          success: false,
+
+          message:
+            "Server error",
+        });
+
+    }
+
+  };
+
+  // ===================================
+// BULK INVENTORY OPTIONS
+// ===================================
+const getBulkOptions = async (req, res) => {
+
+  try {
+
+    if (req.user.role !== "manager") {
+      return res.status(403).json({
+        success: false,
+        message: "Managers only",
+      });
+    }
+
+    const phones = await Phone.find(
+      {},
+      "branch brand model ram storage"
+    )
+      .populate("branch", "name")
+      .lean();
+
+    const unique = new Map();
+
+    phones.forEach((phone) => {
+
+      const key = [
+
+        phone.branch?._id,
+
+        phone.brand,
+
+        phone.model,
+
+        phone.ram,
+
+        phone.storage,
+
+      ].join("|");
+
+      if (!unique.has(key)) {
+
+        unique.set(key, {
+
+  branchId:
+    phone.branch?._id?.toString(),
+
+  branchName:
+    phone.branch?.name,
+
+  brand:
+    phone.brand,
+
+  model:
+    phone.model,
+
+  ram:
+    phone.ram,
+
+  storage:
+    phone.storage,
+
+});
+
+      }
+
+    });
+
+    return res.json({
+
+      success: true,
+
+      options:
+
+        Array.from(
+          unique.values()
+        )
+
+        .sort((a, b) =>
+
+          a.brand.localeCompare(
+            b.brand
+          )
+
+        ),
+
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    return res.status(500).json({
+
+      success: false,
+
+      message:
+        "Server error",
+
+    });
+
+  }
+
+};
+
   // ===================================
 // DELETE PHONE
 // ===================================
@@ -771,6 +1161,9 @@ module.exports = {
   getPhoneById,
   addPhone,
   updatePhone,
+  bulkInventoryUpdate,
+  getBulkInventoryPreview,
+  getBulkOptions,
   deletePhone,
   transferPhone,
   sellPhone,

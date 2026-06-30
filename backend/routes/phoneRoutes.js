@@ -9,12 +9,13 @@ const {
   getPhoneById,
   addPhone,
   updatePhone,
+  bulkInventoryUpdate,
+  getBulkInventoryPreview,
+  getBulkOptions,
   deletePhone,
   sellPhone,
   transferPhone,
-} = require(
-  "../controllers/phoneController"
-);
+} = require("../controllers/phoneController");
 
 const {
   protect,
@@ -33,7 +34,23 @@ router.get(
   getPhones
 );
 
+// ==============================
+// BULK INVENTORY OPTIONS
+// ==============================
+router.get(
+  "/bulk-options",
+  protect,
+  getBulkOptions
+);
 
+// ==============================
+// BULK INVENTORY PREVIEW
+// ==============================
+router.get(
+  "/bulk-preview",
+  protect,
+  getBulkInventoryPreview
+);
 
 // ==============================
 // GET SINGLE PHONE
@@ -44,8 +61,6 @@ router.get(
   getPhoneById
 );
 
-
-
 // ==============================
 // ADD PHONE
 // ==============================
@@ -55,7 +70,14 @@ router.post(
   addPhone
 );
 
-
+// ==============================
+// BULK INVENTORY UPDATE
+// ==============================
+router.put(
+  "/bulk-update",
+  protect,
+  bulkInventoryUpdate
+);
 
 // ==============================
 // UPDATE PHONE
@@ -66,8 +88,6 @@ router.put(
   updatePhone
 );
 
-
-
 // ==============================
 // DELETE PHONE
 // ==============================
@@ -77,8 +97,6 @@ router.delete(
   deletePhone
 );
 
-
-
 // ==============================
 // SELL PHONE
 // ==============================
@@ -87,8 +105,6 @@ router.post(
   protect,
   sellPhone
 );
-
-
 
 // ==============================
 // TRANSFER PHONE

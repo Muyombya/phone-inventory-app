@@ -434,6 +434,18 @@ return ( <nav
                   </Link>
 
                   <Link
+                      to="/bulk-inventory-update"
+                      className="
+                        block
+                        px-5
+                        py-4
+                        hover:bg-orange-700
+                      "
+                    >
+                      Bulk Inventory Update
+                    </Link>
+
+                  <Link
                     to="/branches"
                     className="
                       block
@@ -745,6 +757,21 @@ return ( <nav
               >
                 Transfer History
               </Link>
+
+              <Link
+                  to="/bulk-inventory-update"
+                  onClick={() =>
+                    setMobileMenuOpen(false)
+                  }
+                  className="
+                    block
+                    px-5
+                    py-4
+                    border-b
+                  "
+                >
+                  Bulk Inventory Update
+                </Link>
 
               <Link
                 to="/branches"

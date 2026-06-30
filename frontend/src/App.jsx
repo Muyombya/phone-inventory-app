@@ -43,6 +43,8 @@ import AuditLogs from "./pages/AuditLogs";
 
 import useSessionTimeout from "./hooks/useSessionTimeout";
 
+import BulkInventoryUpdate from "./pages/BulkInventoryUpdate";
+
 //import { useCallback } from "react";
 
 // =========================
@@ -127,6 +129,14 @@ return ( <BrowserRouter>
                   <AddPhone />
                 }
               />
+
+              {/* BULK INVENTORY UPDATE */}
+                <Route
+                  path="/bulk-inventory-update"
+                  element={
+                    <BulkInventoryUpdate />
+                  }
+                />
 
               {/* EDIT PHONE */}
               <Route

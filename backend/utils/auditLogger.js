@@ -1,23 +1,7 @@
 const Audit =
   require("../models/Audit");
 
-const logAudit =
-  async ({
-    user,
-    branch,
-
-    sourceBranch,
-    destinationBranch,
-    affectedBranches,
-
-    action,
-    entityType,
-    entityId,
-    itemName,
-    description,
-  }) => {
-    try {
-      await Audit.create({
+const logAudit = async ({
   user,
   branch,
 
@@ -30,16 +14,39 @@ const logAudit =
   entityId,
   itemName,
   description,
-});
-    } catch (
-      error
-    ) {
-      console.log(
-        "Audit Error:",
-        error.message
-      );
-    }
+
+  session = null,
+}) => {
+
+  const auditData = {
+
+    user,
+    branch,
+
+    sourceBranch,
+    destinationBranch,
+    affectedBranches,
+
+    action,
+    entityType,
+    entityId,
+    itemName,
+    description,
   };
+
+  if (session) {
+
+    await Audit.create(
+      [auditData],
+      { session }
+    );
+
+    return;
+  }
+
+  await Audit.create(auditData);
+
+};
 
 module.exports =
   logAudit;

@@ -17,12 +17,12 @@ const logAudit =
 // RECEIPT NUMBER
 // =========================
 const generateReceiptNumber =
-  async () => {
+  async (session = null) => {
+
     const counter =
       await Counter.findOneAndUpdate(
         {
-          name:
-            "saleReceipt",
+          name: "saleReceipt",
         },
         {
           $inc: {
@@ -30,10 +30,11 @@ const generateReceiptNumber =
           },
         },
         {
-          returnDocument:
-            "after",
+          returnDocument: "after",
 
           upsert: true,
+
+          session,
         }
       );
 
@@ -151,291 +152,358 @@ const ensureManager =
 // CREATE SALE
 // SAFE INVENTORY FLOW
 // =========================
-const createSale =
-  async (
-    req,
-    res
-  ) => {
-    try {
-      const {
-        items,
-        customerName,
-        customerPhone,
-        paymentMethod,
-      } = req.body;
 
-      if (
-        !items ||
-        items.length === 0
-      ) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "No items selected",
-          });
-      }
+const createSale = async (req, res) => {
 
-      const soldItems =
-        [];
+  const session =
+    await Phone.startSession();
 
-      let totalAmount =
-        0;
+  let sale;
 
-      let totalProfit =
-        0;
+  try {
 
-      let totalDiscount =
-        0;
+    session.startTransaction();
 
-      let saleBranch =
-        resolveBranchId(
-          req.user.branch
-        );
+    const {
+      items,
+      customerName,
+      customerPhone,
+      paymentMethod,
+    } = req.body;
 
-      // =====================
-      // BUILD SALE DATA
-      // DO NOT DELETE STOCK YET
-      // =====================
-      for (const item of items) {
-        const phone =
-          await Phone.findById(
-            item.phoneId
-          );
+    // =====================================
+    // BASIC VALIDATION
+    // =====================================
 
-        if (!phone) {
-          return res
-            .status(404)
-            .json({
-              message:
-                "Phone not found",
-            });
-        }
+    if (!Array.isArray(items) || items.length === 0) {
+      throw new Error(
+        "No items selected."
+      );
+    }
 
-        const phoneBranch =
-          resolveBranchId(
-            phone.branch
-          );
+    // =====================================
+    // DUPLICATE PHONE CHECK
+    // =====================================
 
-        if (
-          saleBranch &&
-          phoneBranch &&
-          saleBranch.toString() !==
-            phoneBranch.toString()
-        ) {
-          return res
-            .status(400)
-            .json({
-              message:
-                "All sold phones must belong to the same branch",
-            });
-        }
+    const requestedIds =
+      items.map(item => String(item.phoneId));
 
-        saleBranch =
-          saleBranch ||
-          phoneBranch;
-
-        const discount =
-          Number(
-            item.discount ||
-              0
-          );
-
-        const finalPrice =
-          Number(
-            phone.sellingPrice ||
-              0
-          ) -
-          (
-            Number(
-              phone.sellingPrice ||
-                0
-            ) *
-            discount
-          ) /
-            100;
-
-        const buyingPrice =
-          Number(
-            phone.buyingPrice ||
-              0
-          );
-
-        const profit =
-          finalPrice -
-          buyingPrice;
-
-        soldItems.push({
-  phoneId:
-    phone._id,
-
-  brand:
-    phone.brand,
-
-  model:
-    phone.model,
-
-  imei:
-    phone.imei,
-
-  color:
-    phone.color,
-
-  ram:
-    phone.ram,
-
-  storage:
-    phone.storage,
-
-  buyingPrice,
-
-  sellingPrice:
-    Number(
-      phone.sellingPrice ||
-        0
-    ),
-
-  finalPrice,
-
-  profit,
-
-  discount,
-
-  branch:
-    phoneBranch,
-});
-
-        totalAmount +=
-          Number(
-            finalPrice || 0
-          );
-
-        totalProfit +=
-          Number(
-            profit || 0
-          );
-
-        totalDiscount +=
-          Number(
-            discount || 0
-          );
-      }
-
-      if (!saleBranch) {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Cannot create sale because no branch is assigned to the selected phones or current user",
-          });
-      }
-
-      // =====================
-      // RECEIPT NUMBER
-      // =====================
-      const receiptNumber =
-        await generateReceiptNumber();
-
-      // =====================
-      // CREATE SALE FIRST
-      // =====================
-      const sale =
-        await Sale.create({
-          items:
-            soldItems,
-
-          customerName:
-            customerName ||
-            "Walk-in Customer",
-
-          customerPhone:
-            customerPhone ||
-            "",
-
-          paymentMethod:
-            paymentMethod ||
-            "Cash",
-
-          totalAmount,
-
-          totalProfit,
-
-          totalDiscount,
-
-          returnedRevenue: 0,
-
-          returnedProfit: 0,
-
-          returnedDiscount: 0,
-
-          returnedAt: null,
-
-          status:
-            "Completed",
-
-          receiptNumber,
-
-          soldBy:
-            req.user._id,
-
-          branch:
-            saleBranch,
-        });
-
-      // =====================
-      // REMOVE INVENTORY
-      // ONLY AFTER SALE EXISTS
-      // =====================
-      for (const item of soldItems) {
-        await Phone.findByIdAndDelete(
-          item.phoneId
-        );
-      }
-
-      // =====================
-      // AUDIT LOG
-      // =====================
-      await logAudit({
-        user:
-          req.user._id,
-
-        branch:
-          saleBranch,
-
-        action:
-          "CREATE_SALE",
-
-        entityType:
-          "Sale",
-
-        entityId:
-          sale._id,
-
-        description:
-          `Created sale ${sale.receiptNumber}`,
-      });
-
-      return res
-        .status(201)
-        .json({
-          success: true,
-          sale,
-        });
-    } catch (
-      error
-    ) {
-      console.log(
-        error
+    const duplicateIds =
+      requestedIds.filter(
+        (id, index) =>
+          requestedIds.indexOf(id) !== index
       );
 
-      return res
-        .status(500)
-        .json({
-          message:
-            "Server Error",
-        });
+    if (duplicateIds.length) {
+      throw new Error(
+        "The same phone cannot appear twice in one sale."
+      );
     }
-  };
+
+    // =====================================
+    // INITIALISE TOTALS
+    // =====================================
+
+    const soldItems = [];
+
+    let totalAmount = 0;
+
+    let totalProfit = 0;
+
+    let totalDiscount = 0;
+
+    let saleBranch =
+      resolveBranchId(
+        req.user.branch
+      );
+
+    // =====================================
+    // RECEIPT NUMBER
+    // =====================================
+
+    const receiptNumber =
+      await generateReceiptNumber(
+        session
+      );
+
+    // =====================================
+    // VALIDATE INVENTORY
+    // =====================================
+
+    for (const item of items) {
+
+      const phone =
+        await Phone.findById(
+          item.phoneId
+        ).session(session);
+
+      if (!phone) {
+
+        throw new Error(
+          `Phone ${item.phoneId} has already been sold or no longer exists.`
+        );
+      }
+
+      const phoneBranch =
+        resolveBranchId(
+          phone.branch
+        );
+
+      if (
+        saleBranch &&
+        phoneBranch &&
+        saleBranch.toString() !==
+        phoneBranch.toString()
+      ) {
+
+        throw new Error(
+          "All phones in one sale must belong to the same branch."
+        );
+      }
+
+      saleBranch =
+        saleBranch ||
+        phoneBranch;
+
+      const discount =
+        Number(item.discount || 0);
+
+      if (
+        Number.isNaN(discount) ||
+        discount < 0 ||
+        discount > 100
+      ) {
+
+        throw new Error(
+          `Invalid discount supplied for ${phone.brand} ${phone.model}.`
+        );
+      }
+
+      const buyingPrice =
+        Number(
+          phone.buyingPrice || 0
+        );
+
+      const sellingPrice =
+        Number(
+          phone.sellingPrice || 0
+        );
+
+      const finalPrice =
+        sellingPrice -
+        (
+          sellingPrice *
+          discount
+        ) / 100;
+
+      const profit =
+        finalPrice -
+        buyingPrice;
+
+      soldItems.push({
+
+        phoneId:
+          phone._id,
+
+        brand:
+          phone.brand,
+
+        model:
+          phone.model,
+
+        imei:
+          phone.imei,
+
+        color:
+          phone.color,
+
+        ram:
+          phone.ram,
+
+        storage:
+          phone.storage,
+
+        buyingPrice,
+
+        sellingPrice,
+
+        finalPrice,
+
+        profit,
+
+        discount,
+
+        branch:
+          phoneBranch,
+      });
+
+      totalAmount +=
+        finalPrice;
+
+      totalProfit +=
+        profit;
+
+      totalDiscount +=
+        discount;
+    }
+
+    if (!saleBranch) {
+
+      throw new Error(
+        "Unable to determine the sale branch."
+      );
+    }
+
+        // =====================================
+    // REMOVE INVENTORY
+    // =====================================
+
+    for (const item of soldItems) {
+
+      const removedPhone =
+        await Phone.findOneAndDelete(
+          {
+            _id: item.phoneId,
+          },
+          {
+            session,
+          }
+        );
+
+      if (!removedPhone) {
+
+        throw new Error(
+          `${item.brand} ${item.model} has already been sold by another transaction.`
+        );
+      }
+    }
+
+    // =====================================
+    // CREATE SALE
+    // =====================================
+
+    const createdSales =
+      await Sale.create(
+        [
+          {
+            items: soldItems,
+
+            customerName:
+              customerName?.trim() ||
+              "Walk-in Customer",
+
+            customerPhone:
+              customerPhone?.trim() ||
+              "",
+
+            paymentMethod:
+              paymentMethod ||
+              "Cash",
+
+            totalAmount,
+
+            totalProfit,
+
+            totalDiscount,
+
+            returnedRevenue: 0,
+
+            returnedProfit: 0,
+
+            returnedDiscount: 0,
+
+            returnedAt: null,
+
+            status: "Completed",
+
+            receiptNumber,
+
+            soldBy: req.user._id,
+
+            branch: saleBranch,
+          },
+        ],
+        {
+          session,
+        }
+      );
+
+    sale = createdSales[0];
+
+    // =====================================
+    // AUDIT LOG
+    // =====================================
+
+    await logAudit({
+
+  user: req.user._id,
+
+  branch: saleBranch,
+
+  action: "CREATE_SALE",
+
+  entityType: "Sale",
+
+  entityId: sale._id,
+
+  description:
+    `Created sale ${sale.receiptNumber}`,
+
+  session,
+});
+
+    // =====================================
+    // COMMIT TRANSACTION
+    // =====================================
+
+    await session.commitTransaction();
+
+    return res.status(201).json({
+
+      success: true,
+
+      sale,
+    });
+
+        } catch (error) {
+
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+
+    console.error(
+      "Create Sale Error:",
+      error
+    );
+
+    const statusCode =
+      error.message.includes("already been sold")
+        ? 409
+        : error.message.includes("No items")
+        ? 400
+        : error.message.includes("Invalid")
+        ? 400
+        : error.message.includes("branch")
+        ? 400
+        : 500;
+
+    return res.status(statusCode).json({
+
+      success: false,
+
+      message:
+        statusCode === 500
+          ? "Unable to complete the sale."
+          : error.message,
+    });
+
+  } finally {
+
+    await session.endSession();
+
+  }
+
+};
   // =========================
 // GET ALL SALES
 // WITH DATE FILTERING
