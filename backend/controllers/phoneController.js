@@ -544,6 +544,13 @@ const getBulkInventoryPreview =
         storage,
       } = req.query;
 
+      console.log({
+  brand,
+  model,
+  ram,
+  storage,
+});
+
       // =========================
       // VALIDATION
       // =========================
@@ -582,6 +589,8 @@ const getBulkInventoryPreview =
           storage,
 
         });
+
+        console.log("Matching phones:", phones.length);
 
       if (
         phones.length === 0
@@ -656,13 +665,6 @@ const getBulkOptions = async (req, res) => {
       });
     }
 
-    console.log({
-  brand,
-  model,
-  ram,
-  storage,
-});
-
     const phones = await Phone.find(
       {},
       "brand model ram storage"
@@ -705,8 +707,6 @@ const getBulkOptions = async (req, res) => {
       }
 
     });
-
-    console.log("Matching phones:", phones.length);
 
     return res.json({
 
