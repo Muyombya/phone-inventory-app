@@ -162,7 +162,7 @@ function Login() {
                   mt-6
                 "
               >
-                Gadget Shop
+                Gadget Shop DEV
               </h1>
 
               <p
@@ -234,7 +234,7 @@ function Login() {
                   text-white
                 "
               >
-                Welcome Back
+               Welcome Back - DEV
               </h2>
 
               <p
