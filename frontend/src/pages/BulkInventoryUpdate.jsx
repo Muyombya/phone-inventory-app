@@ -121,11 +121,18 @@ function handleChange(e) {
 
   });
 
+ if (
+  name === "brand" ||
+  name === "model" ||
+  name === "ram" ||
+  name === "storage"
+) {
   setMatchingCount(null);
 
   setCurrentBuyingPrice("");
 
   setCurrentSellingPrice("");
+}
 
 }
 
