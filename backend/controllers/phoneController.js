@@ -123,17 +123,16 @@ const getPhoneById =
 const addPhone =
   async (req, res) => {
     try {
-      const {
-              brand,
-              model,
-              imei,
-              storage,
-              ram,
-              color,
-              buyingPrice,
-              sellingPrice,
-              branch,
-            } = req.body;
+      const brand = req.body.brand?.trim();
+      const model = req.body.model?.trim();
+      const imei = req.body.imei?.trim();
+      const storage = req.body.storage?.trim();
+      const ram = req.body.ram?.trim();
+      const color = req.body.color?.trim();
+
+      const buyingPrice = req.body.buyingPrice;
+      const sellingPrice = req.body.sellingPrice;
+      const branch = req.body.branch;
 
       const existingPhone =
         await Phone.findOne(
@@ -280,17 +279,17 @@ const updatePhone =
       const oldImei =
         phone.imei;
 
-      phone.brand =
-        req.body.brand ||
-        phone.brand;
+      if (req.body.brand !== undefined) {
+  phone.brand = req.body.brand.trim();
+}
 
-      phone.model =
-        req.body.model ||
-        phone.model;
+if (req.body.model !== undefined) {
+  phone.model = req.body.model.trim();
+}
 
-      phone.imei =
-        req.body.imei ||
-        phone.imei;
+if (req.body.imei !== undefined) {
+  phone.imei = req.body.imei.trim();
+}
 
       phone.buyingPrice =
         req.body
@@ -302,17 +301,17 @@ const updatePhone =
           .sellingPrice ||
         phone.sellingPrice;
 
-      phone.storage =
-        req.body.storage ||
-        phone.storage;
+      if (req.body.storage !== undefined) {
+  phone.storage = req.body.storage.trim();
+}
 
-      phone.ram =
-        req.body.ram ||
-        phone.ram;
+if (req.body.ram !== undefined) {
+  phone.ram = req.body.ram.trim();
+}
 
-      phone.color =
-        req.body.color ||
-        phone.color;
+if (req.body.color !== undefined) {
+  phone.color = req.body.color.trim();
+}
 
       if (
         req.user.role ===
