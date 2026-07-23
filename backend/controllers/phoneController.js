@@ -13,6 +13,9 @@ const Sale =
 const logAudit =
   require("../utils/auditLogger");
 
+const inventoryEventEngine =
+require("../services/inventoryEventEngine");
+
 // ===================================
 // GET ALL PHONES
 // ===================================
@@ -235,6 +238,40 @@ const addPhone =
         });
     }
   };
+
+// =========================
+// INVENTORY EVENT
+// =========================
+        await inventoryEventEngine.publish({
+
+          type: "PURCHASE",
+
+          brand: phone.brand,
+
+          model: phone.model,
+
+          ram: phone.ram,
+
+          storage: phone.storage,
+
+          quantity: 1,
+
+          buyingPrice:
+            phone.buyingPrice,
+
+          sellingPrice:
+            phone.sellingPrice,
+
+          branch:
+            assignedBranch,
+
+          performedBy:
+            req.user.id,
+
+          source:
+            "ADD_PHONE",
+
+    });
 
 // ===================================
 // UPDATE PHONE
