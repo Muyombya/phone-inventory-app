@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const inventoryEventSchema = new mongoose.Schema(
   {
@@ -114,7 +114,8 @@ inventoryEventSchema.index({
   branch: 1,
 });
 
-export default mongoose.model(
-  "InventoryEvent",
-  inventoryEventSchema
-);
+module.exports =
+  mongoose.model(
+    "InventoryEvent",
+    inventoryEventSchema
+  );

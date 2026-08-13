@@ -222,6 +222,38 @@ const addPhone =
           `Added ${phone.brand} ${phone.model} (${phone.imei}) to inventory`,
       });
 
+// =========================
+// INVENTORY EVENT
+// =========================
+await inventoryEventEngine.publish({
+  type: "PURCHASE",
+
+  brand: phone.brand,
+
+  model: phone.model,
+
+  ram: phone.ram,
+
+  storage: phone.storage,
+
+  quantity: 1,
+
+  buyingPrice:
+    phone.buyingPrice,
+
+  sellingPrice:
+    phone.sellingPrice,
+
+  branch:
+    assignedBranch,
+
+  performedBy:
+    req.user.id,
+
+  source:
+    "ADD_PHONE",
+});
+
       res
         .status(201)
         .json(phone);
@@ -238,40 +270,6 @@ const addPhone =
         });
     }
   };
-
-// =========================
-// INVENTORY EVENT
-// =========================
-        await inventoryEventEngine.publish({
-
-          type: "PURCHASE",
-
-          brand: phone.brand,
-
-          model: phone.model,
-
-          ram: phone.ram,
-
-          storage: phone.storage,
-
-          quantity: 1,
-
-          buyingPrice:
-            phone.buyingPrice,
-
-          sellingPrice:
-            phone.sellingPrice,
-
-          branch:
-            assignedBranch,
-
-          performedBy:
-            req.user.id,
-
-          source:
-            "ADD_PHONE",
-
-    });
 
 // ===================================
 // UPDATE PHONE
