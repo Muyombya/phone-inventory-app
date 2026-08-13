@@ -1,10 +1,11 @@
-import InventoryAnalytics from "../models/InventoryAnalytics.js";
+const InventoryAnalytics =
+  require("../models/InventoryAnalytics");
 
 /**
  * Updates lifetime analytics whenever stock
  * is added into inventory.
  */
-export async function recordPurchase(phone) {
+async function recordPurchase(phone) {
   const now = new Date();
 
   const analytics =
@@ -84,3 +85,7 @@ export async function recordPurchase(phone) {
 
   return await analytics.save();
 }
+
+module.exports = {
+  recordPurchase,
+};
