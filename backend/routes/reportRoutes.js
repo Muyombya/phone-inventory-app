@@ -1,29 +1,75 @@
-const express =
-  require("express");
+const express = require("express");
 
-const router =
-  express.Router();
+const router = express.Router();
 
 const {
   getDashboardReport,
-} = require(
-  "../controllers/reportController"
-);
+  getBranchSalesReport,
+  getCurrentStockReport,
+  getProductHistoryReport,
+  getProductCatalog,
+} = require("../controllers/reportController");
 
 const {
-  protect,
-} = require(
-  "../middleware/authMiddleware"
-);
+  getBusinessAI,
+} = require("../controllers/businessAIController");
 
-// =========================
-// REPORTS
-// =========================
+const { protect } = require("../middleware/authMiddleware");
+
+// =====================================
+// MANAGEMENT DASHBOARD
+// =====================================
 router.get(
   "/",
   protect,
   getDashboardReport
 );
 
-module.exports =
-  router;
+// =====================================
+// BRANCH SALES
+// =====================================
+router.get(
+  "/branch-sales",
+  protect,
+  getBranchSalesReport
+);
+
+// =====================================
+// CURRENT STOCK
+// =====================================
+router.get(
+  "/current-stock",
+  protect,
+  getCurrentStockReport
+);
+
+
+// =====================================
+// HISTORICAL PRODUCT CATALOGUE
+// =====================================
+router.get(
+  "/product-catalog",
+  protect,
+  getProductCatalog
+);
+
+
+// =====================================
+// BUSINESS AI
+// =====================================
+router.get(
+  "/ai",
+  protect,
+  getBusinessAI
+);
+
+// =====================================
+// PRODUCT LIFETIME HISTORY
+// =====================================
+router.get(
+  "/product-history",
+  protect,
+  getProductHistoryReport
+);
+
+module.exports = router;

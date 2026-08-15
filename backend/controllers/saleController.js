@@ -1,3 +1,22 @@
+const getSaleAuditDetails = (sale) => ({
+  receiptNumber: sale?.receiptNumber || "",
+  customerName: sale?.customerName || "Walk-in Customer",
+  customerPhone: sale?.customerPhone || "",
+  paymentMethod: sale?.paymentMethod || "",
+  status: sale?.status || "",
+  items: (sale?.items || []).map((item) => ({
+    brand: item.brand || "",
+    model: item.model || "",
+    ram: item.ram || "",
+    storage: item.storage || "",
+    color: item.color || "",
+    imei: item.imei || "",
+    buyingPrice: item.buyingPrice ?? null,
+    sellingPrice: item.sellingPrice ?? null,
+    finalPrice: item.finalPrice ?? null,
+  })),
+});
+
 const Sale =
   require("../models/Sale");
 
@@ -436,21 +455,24 @@ const createSale = async (req, res) => {
 
     await logAudit({
 
-  user: req.user._id,
+      user:
+        req.user._id,
 
-  branch: saleBranch,
+      branch:
+        saleBranch,
 
-  action: "CREATE_SALE",
+      action:
+        "CREATE_SALE",
 
-  entityType: "Sale",
+      entityType:
+        "Sale",
 
-  entityId: sale._id,
+      entityId:
+        sale._id,
 
-  description:
-    `Created sale ${sale.receiptNumber}`,
-
-  session,
-});
+      description:
+        `Created sale ${sale.receiptNumber}`,
+    });
 
     // =====================================
     // COMMIT TRANSACTION
@@ -751,6 +773,13 @@ const deleteSale =
         entityId:
           sale._id,
 
+        itemName:
+          sale.items?.length === 1
+            ? `${sale.items[0].brand} ${sale.items[0].model} (${sale.items[0].imei})`
+            : `${sale.items?.length || 0} item sale`,
+
+        itemDetails: getSaleAuditDetails(sale),
+
         description:
           `Deleted sale ${sale.receiptNumber} and restored inventory`,
       });
@@ -996,6 +1025,13 @@ const returnSale =
         entityId:
           sale._id,
 
+        itemName:
+          sale.items?.length === 1
+            ? `${sale.items[0].brand} ${sale.items[0].model} (${sale.items[0].imei})`
+            : `${sale.items?.length || 0} item sale`,
+
+        itemDetails: { ...getSaleAuditDetails(sale), returnReason: reason },
+
         description:
           `Returned sale ${sale.receiptNumber}. Revenue reversed. Reason: ${reason}`,
       });
@@ -1072,6 +1108,13 @@ const purgeSale =
 
         entityId:
           sale._id,
+
+        itemName:
+          sale.items?.length === 1
+            ? `${sale.items[0].brand} ${sale.items[0].model} (${sale.items[0].imei})`
+            : `${sale.items?.length || 0} item sale`,
+
+        itemDetails: getSaleAuditDetails(sale),
 
         description:
           `Purged sale ${sale.receiptNumber}`,

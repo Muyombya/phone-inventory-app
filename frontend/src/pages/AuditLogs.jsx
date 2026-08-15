@@ -137,6 +137,81 @@ const getKampalaDateKey =
       new Date(date)
     );
 
+// =========================
+// TRANSFER GROUPING HELPERS
+// =========================
+const getItemListForGrouping = (log) => {
+  const details = log?.itemDetails;
+  if (!details) return [];
+  if (Array.isArray(details)) return details;
+  if (Array.isArray(details.items)) return details.items;
+  if (details.brand || details.model || details.imei) return [details];
+  return [];
+};
+
+const getTransferModelKey = (log) => {
+  const firstItem = getItemListForGrouping(log)[0];
+  const key = [
+    firstItem?.brand,
+    firstItem?.model,
+    firstItem?.ram,
+    firstItem?.storage,
+  ].filter(Boolean).join('|');
+
+  return key || log?.itemName || log?.entityId || 'transfer';
+};
+
+const groupTransferLogs = (input = []) => {
+  const result = [];
+  const transferGroups = new Map();
+
+  input.forEach((log) => {
+    if (String(log?.action || '').toUpperCase() !== 'TRANSFER') {
+      result.push(log);
+      return;
+    }
+
+    const source = String(log.sourceBranch?._id || log.sourceBranch || '');
+    const destination = String(log.destinationBranch?._id || log.destinationBranch || '');
+    const actor = String(log.user?._id || log.user || '');
+    const modelKey = getTransferModelKey(log);
+    const timestamp = new Date(log.createdAt).getTime();
+    const bucket = Number.isFinite(timestamp)
+      ? Math.floor(timestamp / (5 * 60 * 1000))
+      : String(log._id || '');
+    const key = `${source}|${destination}|${actor}|${modelKey}|${bucket}`;
+    const items = getItemListForGrouping(log);
+
+    if (!transferGroups.has(key)) {
+      const grouped = {
+        ...log,
+        itemDetails: {
+          ...(log.itemDetails && !Array.isArray(log.itemDetails) ? log.itemDetails : {}),
+          items: [...items],
+          quantity: items.length || Number(log.itemDetails?.quantity || 1),
+        },
+      };
+      transferGroups.set(key, grouped);
+      result.push(grouped);
+      return;
+    }
+
+    const group = transferGroups.get(key);
+    const existingItems = Array.isArray(group.itemDetails?.items)
+      ? group.itemDetails.items
+      : [];
+
+    group.itemDetails.items = [...existingItems, ...items];
+    group.itemDetails.quantity = group.itemDetails.items.length || 1;
+
+    if (new Date(log.createdAt) > new Date(group.createdAt)) {
+      group.createdAt = log.createdAt;
+    }
+  });
+
+  return result;
+};
+
 function AuditLogs() {
   const [logs, setLogs] =
     useState([]);
@@ -235,7 +310,9 @@ function AuditLogs() {
               log.entityType,
 
             Description:
-              log.description,
+              getAuditDescription(log),
+            "Phone / Serial Details":
+              getItemList(log).map((item) => `${formatPhoneSpec(item)} ${item?.imei || ""}`.trim()).join(" | "),
           })
         );
 
@@ -376,16 +453,13 @@ function AuditLogs() {
   // =========================
   const branches =
     useMemo(() => {
-      const names =
-        logs
-          .map(
-            (log) =>
-              log.branch
-                ?.name
-          )
-          .filter(
-            Boolean
-          );
+      const names = logs
+        .flatMap((log) => [
+          log.branch?.name,
+          log.sourceBranch?.name,
+          log.destinationBranch?.name,
+        ])
+        .filter(Boolean);
 
       return [
         ...new Set(
@@ -532,11 +606,10 @@ function AuditLogs() {
                 .includes(
                   query
                 ) ||
-              log.entityType
-                ?.toLowerCase()
-                .includes(
-                  query
-                ) ||
+              log.entityType?.toLowerCase().includes(query) ||
+              log.itemName?.toLowerCase().includes(query) ||
+              log.sourceBranch?.name?.toLowerCase().includes(query) ||
+              log.destinationBranch?.name?.toLowerCase().includes(query) ||
               log.description
                 ?.toLowerCase()
                 .includes(
@@ -555,69 +628,104 @@ function AuditLogs() {
     ]);
 
 // =========================
-// AUDIT DESCRIPTION
 // =========================
-const getAuditDescription =
-  (log) => {
-    if (
-      log.action !==
-      "TRANSFER"
-    ) {
-      return (
-        log.description
-      );
+// BUSINESS-FRIENDLY AUDIT NARRATIVE
+// =========================
+const getItemList = (log) => {
+  const details = log.itemDetails;
+  if (!details) return [];
+  if (Array.isArray(details)) return details;
+  if (Array.isArray(details.items)) return details.items;
+  if (details.brand || details.model || details.imei) return [details];
+  return [];
+};
+
+const formatPhoneSpec = (item) => {
+  const brandModel = [item?.brand, item?.model].filter(Boolean).join(" ");
+  const memory = [item?.ram, item?.storage].filter(Boolean).join("/");
+  return [brandModel, memory].filter(Boolean).join(" ");
+};
+
+const formatSerials = (items) =>
+  items.map((item) => item?.imei).filter(Boolean).join(", ");
+
+const getAuditDescription = (log) => {
+  const items = getItemList(log);
+  const count = items.length || Number(log.itemDetails?.quantity || 0) || 1;
+  const serials = formatSerials(items);
+  const specs = formatPhoneSpec(items[0]);
+
+  if (log.action === "TRANSFER") {
+    const userBranchId = user?.branch?._id || user?.branch;
+    const sourceBranchId = log.sourceBranch?._id || log.sourceBranch;
+    const destinationBranchId = log.destinationBranch?._id || log.destinationBranch;
+    const quantityLabel = `${count} ${count === 1 ? "pc" : "pcs"}`;
+    const serialLabel = serials ? ` Serial Nos: ${serials}.` : "";
+
+    if (String(userBranchId) === String(destinationBranchId)) {
+      return `You have received ${quantityLabel} of ${specs || log.itemName || log.entityType}${serialLabel} from ${log.sourceBranch?.name || "another branch"}, transferred by ${log.user?.username || "a user"}.`;
     }
-
-    if (
-      user?.role ===
-      "manager"
-    ) {
-      return (
-        log.description
-      );
+    if (String(userBranchId) === String(sourceBranchId)) {
+      return `You have made a transfer of ${quantityLabel} of ${specs || log.itemName || log.entityType}${serialLabel} to ${log.destinationBranch?.name || "another branch"}.`;
     }
+    return `A transfer of ${quantityLabel} of ${specs || log.itemName || log.entityType}${serialLabel} was made from ${log.sourceBranch?.name || "-"} to ${log.destinationBranch?.name || "-"} by ${log.user?.username || "a user"}.`;
+  }
 
-    const userBranchId =
-      user?.branch?._id ||
-      user?.branch;
+  if (log.action === "UPDATE_PHONE") {
+    const before = log.itemDetails?.before;
+    const after = log.itemDetails?.after;
+    return `You updated ${formatPhoneSpec(before) || log.itemName || "a phone"}${before?.imei ? ` (Serial No: ${before.imei})` : ""} to ${formatPhoneSpec(after) || "the new details"}${after?.imei ? ` (Serial No: ${after.imei})` : ""}.`;
+  }
 
-    const sourceBranchId =
-      log.sourceBranch?._id ||
-      log.sourceBranch;
+  if (log.action === "DELETE_PHONE") {
+    return `You deleted ${specs || log.itemName || "a phone"}${serials ? ` (Serial No: ${serials})` : ""} from inventory.`;
+  }
 
-    const destinationBranchId =
-      log.destinationBranch?._id ||
-      log.destinationBranch;
+  if (log.action === "SALE" || log.action === "CREATE_SALE") {
+    const customer = log.itemDetails?.customerName;
+    return `A sale was recorded for ${count} ${count === 1 ? "phone" : "phones"}${specs ? ` — ${specs}` : ""}${serials ? ` (Serial Nos: ${serials})` : ""}${customer ? ` to ${customer}` : ""}.`;
+  }
 
-    if (
-      String(
-        userBranchId
-      ) ===
-      String(
-        sourceBranchId
-      )
-    ) {
-     return `Transferred ${log.itemName || log.entityType} to ${log.destinationBranch?.name}`;
-    }
+  if (log.action === "RETURN_SALE") {
+    const reason = log.itemDetails?.returnReason;
+    return `A sale containing ${count} ${count === 1 ? "phone" : "phones"}${specs ? ` — ${specs}` : ""}${serials ? ` (Serial Nos: ${serials})` : ""} was returned${reason ? ` because: ${reason}` : ""}.`;
+  }
 
-    if (
-      String(
-        userBranchId
-      ) ===
-      String(
-        destinationBranchId
-      )
-    ) {
-     return `Received ${log.itemName || log.entityType} from ${log.sourceBranch?.name}`;
-    }
+  if (log.action === "DELETE_SALE") {
+    return `Sale ${log.itemDetails?.receiptNumber || ""} was deleted and the related inventory was restored.`;
+  }
 
-    return (
-      log.description
-    );
-  };
+  if (log.action === "ADD_PHONE") {
+    return `You added ${specs || log.itemName || "a phone"}${serials ? ` (Serial No: ${serials})` : ""} to inventory.`;
+  }
 
-  // =========================
-  // STATS
+  return log.description || `${log.action || "System action"} recorded.`;
+};
+
+const getAuditDetails = (log) => {
+  const items = getItemList(log);
+  const serials = formatSerials(items);
+  const specs = formatPhoneSpec(items[0]);
+  const details = [];
+
+  if (specs) details.push({ label: "Phone", value: specs });
+  if (serials) details.push({ label: "Serial No.", value: serials });
+
+  if (log.action === "TRANSFER") {
+    details.push({ label: "From", value: log.sourceBranch?.name || "-" });
+    details.push({ label: "To", value: log.destinationBranch?.name || "-" });
+    details.push({ label: "Transferred by", value: log.user?.username || "-" });
+  }
+
+  if (log.itemDetails?.color) details.push({ label: "Colour", value: log.itemDetails.color });
+  if (log.itemDetails?.receiptNumber) details.push({ label: "Receipt", value: log.itemDetails.receiptNumber });
+  if (log.itemDetails?.paymentMethod) details.push({ label: "Payment", value: log.itemDetails.paymentMethod });
+  if (log.itemDetails?.returnReason) details.push({ label: "Return reason", value: log.itemDetails.returnReason });
+
+  return details;
+};
+
+// STATS
   // =========================
   const stats = {
     total:
@@ -654,6 +762,11 @@ const getAuditDescription =
           )
       ).length,
   };
+
+  const displayLogs = useMemo(
+    () => groupTransferLogs(filteredLogs),
+    [filteredLogs]
+  );
 
   // =========================
   // LOADING
@@ -1202,7 +1315,7 @@ const getAuditDescription =
             </thead>
 
             <tbody>
-              {filteredLogs.length ===
+              {displayLogs.length ===
               0 ? (
                 <tr>
                   <td
@@ -1218,7 +1331,7 @@ const getAuditDescription =
                   </td>
                 </tr>
               ) : (
-                filteredLogs.map(
+                displayLogs.map(
                   (log) => (
                     <tr
                       key={
@@ -1270,12 +1383,15 @@ const getAuditDescription =
                         }
                       </td>
 
-                      <td className="p-3 text-sm">
-                        {
-                          getAuditDescription(
-                            log
-                          )
-                        }
+                      <td className="p-3 text-sm min-w-[420px]">
+                        <div className="font-medium text-gray-900">{getAuditDescription(log)}</div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {getAuditDetails(log).map((detail) => (
+                            <span key={`${log._id}-${detail.label}`} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1 text-[11px] text-gray-700">
+                              <span className="font-semibold">{detail.label}:</span> {detail.value}
+                            </span>
+                          ))}
+                        </div>
                       </td>
                     </tr>
                   )
@@ -1295,7 +1411,7 @@ const getAuditDescription =
           space-y-2
         "
       >
-        {filteredLogs.length ===
+        {displayLogs.length ===
         0 ? (
           <div
             className="
@@ -1311,7 +1427,7 @@ const getAuditDescription =
             found
           </div>
         ) : (
-          filteredLogs.map(
+          displayLogs.map(
             (log) => (
               <div
                 key={log._id}
@@ -1419,18 +1535,15 @@ const getAuditDescription =
                     Description
                   </div>
 
-                  <div
-                    className="
-                      text-sm
-                      mt-1
-                      break-words
-                    "
-                  >
-                    {
-                    getAuditDescription(
-                        log
-                      )
-                    }
+                  <div className="text-sm mt-1 break-words font-medium">
+                    {getAuditDescription(log)}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {getAuditDetails(log).map((detail) => (
+                      <span key={`${log._id}-${detail.label}`} className="rounded-full bg-gray-100 px-2 py-1 text-[10px] text-gray-700">
+                        <strong>{detail.label}:</strong> {detail.value}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>

@@ -16,6 +16,17 @@ const logAudit =
 const inventoryEventEngine =
 require("../services/inventoryEventEngine");
 
+const getPhoneAuditDetails = (phone) => ({
+  brand: phone?.brand || "",
+  model: phone?.model || "",
+  ram: phone?.ram || "",
+  storage: phone?.storage || "",
+  color: phone?.color || "",
+  imei: phone?.imei || "",
+  buyingPrice: phone?.buyingPrice ?? null,
+  sellingPrice: phone?.sellingPrice ?? null,
+});
+
 // ===================================
 // GET ALL PHONES
 // ===================================
@@ -218,6 +229,12 @@ const addPhone =
         entityId:
           phone._id,
 
+        itemName:
+          `${phone.brand} ${phone.model} (${phone.imei})`,
+
+        itemDetails:
+          getPhoneAuditDetails(phone),
+
         description:
           `Added ${phone.brand} ${phone.model} (${phone.imei}) to inventory`,
       });
@@ -314,6 +331,9 @@ const updatePhone =
       const oldImei =
         phone.imei;
 
+      const oldPhoneDetails =
+        getPhoneAuditDetails(phone);
+
       if (req.body.brand !== undefined) {
   phone.brand = req.body.brand.trim();
 }
@@ -375,6 +395,14 @@ if (req.body.color !== undefined) {
 
         entityId:
           phone._id,
+
+        itemName:
+          `${phone.brand} ${phone.model} (${phone.imei})`,
+
+        itemDetails: {
+          before: oldPhoneDetails,
+          after: getPhoneAuditDetails(phone),
+        },
 
         description:
           `Updated ${oldBrand} ${oldModel} (${oldImei})`,
@@ -859,6 +887,12 @@ const deletePhone =
         entityId:
           phone._id,
 
+        itemName:
+          `${phone.brand} ${phone.model} (${phone.imei})`,
+
+        itemDetails:
+          getPhoneAuditDetails(phone),
+
         description:
           `Deleted ${phone.brand} ${phone.model} (${phone.imei}) from inventory`,
       });
@@ -1013,6 +1047,13 @@ const oldBranchName =
 
 itemName:
   `${phone.brand} ${phone.model} (${phone.imei})`,
+
+itemDetails: {
+  ...getPhoneAuditDetails(phone),
+  quantity: 1,
+  fromBranch: oldBranchName,
+  toBranch: newBranch.name,
+},
 
 description:
   `Transferred ${phone.brand} ${phone.model} (${phone.imei}) from ${oldBranchName} to ${newBranch.name}`,
@@ -1175,6 +1216,18 @@ const sellPhone =
 
         entityId:
           phone._id,
+
+        itemName:
+          `${phone.brand} ${phone.model} (${phone.imei})`,
+
+        itemDetails: {
+          ...getPhoneAuditDetails(phone),
+          customerName: customerName || "Walk-in Customer",
+          paymentMethod: paymentMethod || "Cash",
+          finalPrice,
+          discountPercent,
+          receiptNumber,
+        },
 
         description:
           `Sold ${phone.brand} ${phone.model} (${phone.imei}) to ${customerName}`,

@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cors = require("cors");
 
+const businessAIRoutes = require("./routes/businessAIRoutes");
 const phoneRoutes = require("./routes/phoneRoutes");
 const authRoutes = require("./routes/authRoutes");
 const saleRoutes = require("./routes/saleRoutes");
@@ -28,6 +29,7 @@ app.use("/api/sales", saleRoutes);
 app.use("/api/branches", branchRoutes);
 app.use("/api/transfers", transferRoutes);
 app.use("/api/valuation", valuationRoutes);
+app.use("/api/business-ai", businessAIRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reports",reportRoutes);

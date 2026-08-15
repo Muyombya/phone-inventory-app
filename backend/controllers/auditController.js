@@ -1,184 +1,70 @@
-const Audit =
-  require("../models/Audit");
+const Audit = require("../models/Audit");
 
-// =========================
-// GET AUDIT LOGS
-// =========================
-const getAuditLogs =
-  async (
-    req,
-    res
-  ) => {
-    try {
-      let query = {};
+const getAuditLogs = async (req, res) => {
+  try {
+    let query = {};
 
-if (
-  req.user.role !==
-  "manager"
-) {
- query = {
-  $or: [
-    {
-      branch:
-        req.user.branch._id,
-    },
-    {
-      affectedBranches:
-        req.user.branch._id,
-    },
-  ],
+    if (req.user.role !== "manager") {
+      const branchId = req.user.branch?._id || req.user.branch;
+      query = {
+        $or: [
+          { branch: branchId },
+          { affectedBranches: branchId },
+          { sourceBranch: branchId },
+          { destinationBranch: branchId },
+        ],
+      };
+    }
+
+    const logs = await Audit.find(query)
+      .sort({ createdAt: -1 })
+      .populate("user", "username role")
+      .populate("branch", "name")
+      .populate("sourceBranch", "name")
+      .populate("destinationBranch", "name")
+      .lean();
+
+    res.json(logs);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Server Error" });
+  }
 };
-}
 
-      const logs =
-        await Audit.find(query)
-          .sort({
-            createdAt:
-              -1,
-          })
-          .populate(
-            "user",
-            "username role"
-          )
-          .populate(
-  "branch",
-  "name"
-)
-.populate(
-  "sourceBranch",
-  "name"
-)
-.populate(
-  "destinationBranch",
-  "name"
-);
+const clearAuditLogs = async (req, res) => {
+  try {
+    if (req.user.role !== "manager") {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
-      res.json(logs);
-    } catch (
-      error
-    ) {
-      console.log(error);
+    const { period } = req.body;
 
-      res.status(500).json({
-        message:
-          "Server Error",
+    if (period === "all") {
+      const result = await Audit.deleteMany({});
+      return res.json({
+        message: "All audit logs deleted successfully",
+        deletedCount: result.deletedCount,
       });
     }
-  };
 
-// =========================
-// CLEAR AUDIT LOGS
-// =========================
-const clearAuditLogs =
-  async (
-    req,
-    res
-  ) => {
-    try {
-      if (
-        req.user.role !==
-        "manager"
-      ) {
-        return res
-          .status(403)
-          .json({
-            message:
-              "Access denied",
-          });
-      }
+    const cutoffDate = new Date();
+    if (period === "30days") cutoffDate.setDate(cutoffDate.getDate() - 30);
+    else if (period === "90days") cutoffDate.setDate(cutoffDate.getDate() - 90);
+    else if (period === "1year") cutoffDate.setFullYear(cutoffDate.getFullYear() - 1);
+    else return res.status(400).json({ message: "Invalid cleanup period" });
 
-      const {
-        period,
-      } = req.body;
+    const result = await Audit.deleteMany({
+      createdAt: { $lt: cutoffDate },
+    });
 
-      let result;
-
-      if (
-        period ===
-        "all"
-      ) {
-        result =
-          await Audit.deleteMany(
-            {}
-          );
-
-        return res.json({
-          message:
-            "All audit logs deleted successfully",
-
-          deletedCount:
-            result.deletedCount,
-        });
-      }
-
-      const cutoffDate =
-        new Date();
-              if (
-        period ===
-        "30days"
-      ) {
-        cutoffDate.setDate(
-          cutoffDate.getDate() -
-            30
-        );
-      } else if (
-        period ===
-        "90days"
-      ) {
-        cutoffDate.setDate(
-          cutoffDate.getDate() -
-            90
-        );
-      } else if (
-        period ===
-        "1year"
-      ) {
-        cutoffDate.setFullYear(
-          cutoffDate.getFullYear() -
-            1
-        );
-      } else {
-        return res
-          .status(400)
-          .json({
-            message:
-              "Invalid cleanup period",
-          });
-      }
-
-      result =
-        await Audit.deleteMany(
-          {
-            createdAt: {
-              $lt:
-                cutoffDate,
-            },
-          }
-        );
-
-      res.json({
-        message:
-          "Audit logs cleaned successfully",
-
-        deletedCount:
-          result.deletedCount,
-      });
-    } catch (
-      error
-    ) {
-      console.log(error);
-
-      res.status(500).json({
-        message:
-          "Server Error",
-      });
-    }
-  };
-
-// =========================
-// EXPORTS
-// =========================
-module.exports = {
-  getAuditLogs,
-  clearAuditLogs,
+    res.json({
+      message: "Audit logs cleaned successfully",
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Server Error" });
+  }
 };
+
+module.exports = { getAuditLogs, clearAuditLogs };

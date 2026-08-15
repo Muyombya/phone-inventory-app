@@ -1,1529 +1,298 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
-import {
-  Link,
-} from "react-router-dom";
-
+import DailyIntelligenceBrief from "./DailyIntelligenceBrief";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../services/api";
 
-// =========================
-// KPI CARD
-// =========================
-const KPI = ({
-  title,
-  value,
-  color =
-    "text-gray-900",
-}) => (
-  <div
-    className="
-      bg-white
-      rounded-xl
-      border
-      border-orange-100
-      p-3
-      shadow-sm
-      hover:shadow-md
-      transition
-    "
-  >
-    <p
-      className="
-        text-[10px]
-        uppercase
-        tracking-wider
-        text-gray-500
-      "
-    >
-      {title}
-    </p>
+function money(value) {
+  return `UGX ${Number(value || 0).toLocaleString()}`;
+}
 
-    <h2
-      className={`
-        text-lg
-        md:text-xl
-        font-black
-        mt-1
-        ${color}
-      `}
-    >
-      {value}
-    </h2>
-  </div>
-);
+function todayISO() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
 function Dashboard() {
-  const [
-    dashboardData,
-    setDashboardData,
-  ] = useState(null);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const user =
-    JSON.parse(
-      localStorage.getItem(
-        "user"
-      )
-    );
-
-  const isManager =
-    user?.role ===
-    "manager";
-
-  // =========================
-  // FETCH DATA
-  // =========================
-  async function fetchData() {
-    try {
-      const response =
-        await api.get(
-          "/dashboard"
-        );
-
-      setDashboardData(
-        response.data
-      );
-    } catch (
-      error
-    ) {
-      console.log(
-        error
-      );
-    } finally {
-      setLoading(
-        false
-      );
-    }
-  }
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchData();
+    let mounted = true;
+
+    async function load() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const day = todayISO();
+
+        const response = await api.get("/reports", {
+          params: {
+            startDate: day,
+            endDate: day,
+          },
+        });
+
+        if (mounted) {
+          setReport(response.data);
+        }
+      } catch (err) {
+        console.error(err);
+
+        if (mounted) {
+          setError(
+            err?.response?.data?.message ||
+              "Unable to load GadgetShop dashboard."
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // =========================
-  // CURRENCY
-  // =========================
-  function formatCurrency(
-    value
-  ) {
-    return Number(
-      value || 0
-    ).toLocaleString();
-  }
+  const stock = report?.stock;
+  const summary = report?.summary;
+  const insights = report?.ai?.insights || [];
+  const branches = stock?.branches || [];
+
+  const health = useMemo(() => {
+    const models = stock?.models || [];
+
+    return {
+      healthy: models.filter((m) => m.status === "Healthy").length,
+      low: models.filter((m) => m.status === "Low").length,
+      critical: models.filter((m) => m.status === "Critical").length,
+      finished: models.filter((m) => m.status === "Out of Stock").length,
+    };
+  }, [stock]);
 
   if (loading) {
     return (
-      <div className="p-6">
-        Loading dashboard...
+      <div className="p-6 text-gray-500">
+        Loading GadgetShop command center...
       </div>
     );
   }
 
-  if (!dashboardData) {
-    return (
-      <div className="p-6">
-        Failed to load dashboard
-      </div>
-    );
+  if (error) {
+    return <div className="p-6 text-red-600">{error}</div>;
   }
-
-  const {
-    summary,
-    bestSellers,
-    lowStock,
-    recentSales,
-    recentReturns,
-    branchPerformance,
-  } = dashboardData;
 
   return (
-    <div
-      className="
-        min-h-screen
-        bg-white
-        p-3
-        md:p-5
-        space-y-4
-      "
-    >
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6 space-y-5">
+      {/* =========================
+          COMMAND CENTER HEADER
+      ========================= */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-[#6b0f1a]">
+            GadgetShop
+          </p>
 
-      {/* ===================== */}
-      {/* HEADER */}
-      {/* ===================== */}
-      <div
-        className="
-          bg-white
-          rounded-2xl
-          border
-          border-orange-100
-          shadow-sm
-          p-5
-        "
-      >
+          <h1 className="text-3xl font-black mt-1">
+            Command Center
+          </h1>
 
-        <div
-          className="
-            flex
-            flex-col
-            lg:flex-row
-            lg:items-center
-            lg:justify-between
-            gap-4
-          "
+          <p className="text-gray-500 mt-1">
+            What is happening today — and what needs attention.
+          </p>
+        </div>
+
+        <Link
+          to="/reports"
+          className="inline-flex items-center justify-center rounded-lg bg-[#6b0f1a] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
         >
+          Open Business Intelligence →
+        </Link>
+      </div>
 
+      {/* =========================
+          DAILY INTELLIGENCE BRIEF
+          Full-width attention layer
+      ========================= */}
+      <DailyIntelligenceBrief />
+
+      {/* =========================
+          CORE KPI STRIP
+      ========================= */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="bg-white rounded-xl border p-4 shadow-sm">
+          <p className="text-xs text-gray-500">
+            Today's Sales
+          </p>
+          <p className="text-xl font-black mt-1">
+            {money(summary?.netRevenue)}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl border p-4 shadow-sm">
+          <p className="text-xs text-gray-500">
+            Phones Sold
+          </p>
+          <p className="text-2xl font-black mt-1">
+            {summary?.unitsSold || 0}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl border p-4 shadow-sm">
+          <p className="text-xs text-gray-500">
+            Current Stock
+          </p>
+          <p className="text-2xl font-black mt-1">
+            {stock?.summary?.units || 0}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl border p-4 shadow-sm">
+          <p className="text-xs text-gray-500">
+            Stock Value
+          </p>
+          <p className="text-xl font-black mt-1">
+            {money(stock?.summary?.stockValue)}
+          </p>
+        </div>
+
+        <Link
+          to="/reports"
+          className="bg-white rounded-xl border p-4 shadow-sm hover:border-[#6b0f1a] transition-colors"
+        >
+          <p className="text-xs text-gray-500">
+            Management Attention
+          </p>
+          <p className="text-2xl font-black mt-1">
+            {insights.length}
+          </p>
+          <p className="text-xs font-semibold text-[#6b0f1a] mt-1">
+            Review in BI →
+          </p>
+        </Link>
+      </div>
+
+      {/* =========================
+          STOCK HEALTH
+      ========================= */}
+      <div className="bg-white rounded-xl border shadow-sm p-4">
+        <div className="flex items-center justify-between gap-3 mb-3">
           <div>
+            <h2 className="text-lg font-bold">
+              Stock Health
+            </h2>
 
-            <h1
-              className="
-                text-3xl
-                md:text-4xl
-                font-black
-                text-orange-700
-              "
-            >
-              Dashboard
-            </h1>
-
-            <p
-              className="
-                text-sm
-                text-gray-500
-                mt-1
-              "
-            >
-              Gadget Shop
-              Performance Center
+            <p className="text-sm text-gray-500">
+              A quick company or branch-scoped view of current stock.
             </p>
+          </div>
 
-            <p
-              className="
-                text-xs
-                text-gray-400
-                mt-2
-              "
-            >
-              Last Updated:
-              {" "}
-              {new Date().toLocaleString()}
+          <Link
+            to="/inventory"
+            className="text-sm font-semibold text-[#6b0f1a]"
+          >
+            Open Inventory →
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="rounded-lg bg-emerald-50 p-3">
+            <p className="text-xs text-emerald-700">
+              Healthy
             </p>
-
+            <p className="text-2xl font-black text-emerald-800">
+              {health.healthy}
+            </p>
           </div>
 
-          {/* QUICK ACTIONS */}
-          <div
-            className="
-              flex
-              flex-wrap
-              gap-2
-            "
-          >
-
-            <Link
-              to="/sales-terminal"
-              className="
-                bg-orange-700
-                hover:bg-orange-800
-                text-white
-                px-4
-                py-2
-                rounded-xl
-                text-sm
-                font-semibold
-                transition
-              "
-            >
-              Sales
-            </Link>
-
-            <Link
-              to="/inventory"
-              className="
-                bg-orange-600
-                hover:bg-orange-700
-                text-white
-                px-4
-                py-2
-                rounded-xl
-                text-sm
-                font-semibold
-                transition
-              "
-            >
-              Inventory
-            </Link>
-
-            <Link
-              to="/returns"
-              className="
-                bg-amber-600
-                hover:bg-amber-700
-                text-white
-                px-4
-                py-2
-                rounded-xl
-                text-sm
-                font-semibold
-                transition
-              "
-            >
-              Returns
-            </Link>
-
-            <Link
-              to="/reports"
-              className="
-                bg-gray-800
-                hover:bg-black
-                text-white
-                px-4
-                py-2
-                rounded-xl
-                text-sm
-                font-semibold
-                transition
-              "
-            >
-              Reports
-            </Link>
-
+          <div className="rounded-lg bg-amber-50 p-3">
+            <p className="text-xs text-amber-700">
+              Low
+            </p>
+            <p className="text-2xl font-black text-amber-800">
+              {health.low}
+            </p>
           </div>
 
-        </div>
+          <div className="rounded-lg bg-red-50 p-3">
+            <p className="text-xs text-red-700">
+              Critical
+            </p>
+            <p className="text-2xl font-black text-red-800">
+              {health.critical}
+            </p>
+          </div>
 
+          <div className="rounded-lg bg-gray-100 p-3">
+            <p className="text-xs text-gray-600">
+              Finished
+            </p>
+            <p className="text-2xl font-black text-gray-800">
+              {health.finished}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* STAFF NOTICE */}
-      {!isManager && (
-        <div
-          className="
-            bg-orange-100
-            border
-            border-orange-200
-            rounded-xl
-            p-3
-            text-sm
-            text-orange-800
-          "
-        >
-          You are viewing
-          branch-specific
-          performance data.
-        </div>
-      )}
-
-      {/* ===================== */}
-      {/* MAIN KPI RIBBON */}
-      {/* ===================== */}
-      <div
-        className={`
-          grid
-          gap-3
-          ${
-            isManager
-              ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-6"
-              : "grid-cols-2 md:grid-cols-3 xl:grid-cols-5"
-          }
-        `}
-      >
-
-        <KPI
-          title="Inventory Units"
-          value={
-            summary.inventoryCount
-          }
-          color="text-orange-700"
-        />
-
-        <KPI
-          title={
-            isManager
-              ? "Inventory Value"
-              : "Stock Value"
-          }
-          value={`UGX ${formatCurrency(
-            summary.stockValue
-          )}`}
-          color="text-orange-700"
-        />
-
-        <KPI
-          title="Revenue"
-          value={`UGX ${formatCurrency(
-            summary.totalRevenue
-          )}`}
-          color="text-green-600"
-        />
-
-        {isManager && (
-          <KPI
-            title="Profit"
-            value={`UGX ${formatCurrency(
-              summary.totalProfit
-            )}`}
-            color="text-blue-600"
-          />
-        )}
-
-        <KPI
-          title="Phones Sold"
-          value={
-            summary.totalPhonesSold
-          }
-          color="text-purple-600"
-        />
-
-        <KPI
-          title="Returns"
-          value={
-            summary.totalReturns
-          }
-          color="text-red-600"
-        />
-
-      </div>
-            {/* ===================== */}
-      {/* TODAY'S PERFORMANCE */}
-      {/* ===================== */}
-      <div
-        className="
-          bg-white
-          rounded-2xl
-          border
-          border-orange-100
-          p-4
-          shadow-sm
-        "
-      >
-
-        <div
-          className="
-            flex
-            items-center
-            justify-between
-            mb-3
-          "
-        >
-
-          <h2
-            className="
-              text-lg
-              font-black
-              text-orange-700
-            "
-          >
-            Today's Performance
-          </h2>
-
-          <span
-            className="
-              bg-orange-100
-              text-orange-700
-              px-3
-              py-1
-              rounded-full
-              text-xs
-              font-semibold
-            "
-          >
-            LIVE
-          </span>
-
-        </div>
-
-        <div
-          className={`
-            grid
-            gap-3
-            ${
-              isManager
-                ? "grid-cols-2 md:grid-cols-5"
-                : "grid-cols-2 md:grid-cols-4"
-            }
-          `}
-        >
-
-          <KPI
-            title="Revenue"
-            value={`UGX ${formatCurrency(
-              summary.todayRevenue
-            )}`}
-            color="text-green-600"
-          />
-
-          {isManager && (
-            <KPI
-              title="Profit"
-              value={`UGX ${formatCurrency(
-                summary.todayProfit
-              )}`}
-              color="text-blue-600"
-            />
-          )}
-
-          <KPI
-            title="Phones Sold"
-            value={
-              summary.todayPhonesSold
-            }
-            color="text-purple-600"
-          />
-
-          <KPI
-            title="Transactions"
-            value={
-              summary.todayTransactions
-            }
-            color="text-amber-600"
-          />
-
-          <KPI
-            title="Returns"
-            value={
-              summary.todayReturns
-            }
-            color="text-red-600"
-          />
-
-        </div>
-
-      </div>
-
-      {/* ===================== */}
-      {/* BRANCH PERFORMANCE */}
-      {/* ===================== */}
-      {isManager && (
-        <div
-          className="
-            bg-white
-            rounded-2xl
-            border
-            border-orange-100
-            p-4
-            shadow-sm
-          "
-        >
-
-          <div
-            className="
-              flex
-              items-center
-              justify-between
-              mb-4
-            "
-          >
-
-            <h2
-              className="
-                text-lg
-                font-black
-                text-orange-700
-              "
-            >
-              Branch Performance
+      {/* =========================
+          BRANCH PULSE
+      ========================= */}
+      <div className="bg-white rounded-xl border shadow-sm p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-lg font-bold">
+              Branch Pulse
             </h2>
 
-            <span
-              className="
-                text-xs
-                text-gray-500
-              "
-            >
-              Top Performing Branches
-            </span>
-
+            <p className="text-sm text-gray-500">
+              Current stock position at a glance.
+            </p>
           </div>
 
-          {branchPerformance?.length ===
-          0 ? (
-            <div
-              className="
-                text-sm
-                text-gray-500
-              "
-            >
-              No branch performance
-              data available.
-            </div>
-          ) : (
-            <div
-              className="
-                grid
-                md:grid-cols-2
-                xl:grid-cols-3
-                gap-3
-              "
-            >
-
-              {branchPerformance.map(
-                (
-                  branch,
-                  index
-                ) => (
-                  <div
-                    key={index}
-                    className="
-                      border
-                      border-orange-100
-                      rounded-xl
-                      p-4
-                    "
-                  >
-
-                    <div
-                      className="
-                        flex
-                        justify-between
-                        items-start
-                      "
-                    >
-
-                      <div>
-
-                        <h3
-                          className="
-                            font-bold
-                            text-gray-800
-                          "
-                        >
-                          {
-                            branch.branch
-                          }
-                        </h3>
-
-                        <p
-                          className="
-                            text-xs
-                            text-gray-500
-                            mt-1
-                          "
-                        >
-                          {
-                            branch.transactions
-                          }
-                          {" "}
-                          Transactions
-                        </p>
-
-                        <p
-                          className="
-                            text-xs
-                            text-gray-500
-                          "
-                        >
-                          {
-                            branch.phonesSold
-                          }
-                          {" "}
-                          Phones Sold
-                        </p>
-
-                      </div>
-
-                      <div
-                        className="
-                          text-right
-                        "
-                      >
-
-                        <p
-                          className="
-                            text-green-600
-                            font-black
-                            text-sm
-                          "
-                        >
-                          UGX{" "}
-                          {formatCurrency(
-                            branch.revenue
-                          )}
-                        </p>
-
-                      </div>
-
-                    </div>
-
-                  </div>
-                )
-              )}
-
-            </div>
-          )}
-
-        </div>
-      )}
-
-      {/* ===================== */}
-      {/* BEST SELLERS + LOW STOCK */}
-      {/* ===================== */}
-      <div
-        className="
-          grid
-          xl:grid-cols-2
-          gap-4
-        "
-      >
-
-        {/* BEST SELLERS */}
-        <div
-          className="
-            bg-white
-            rounded-2xl
-            border
-            border-orange-100
-            p-4
-            shadow-sm
-          "
-        >
-
-          <div
-            className="
-              flex
-              items-center
-              justify-between
-              mb-3
-            "
+          <Link
+            to="/reports"
+            className="text-sm font-semibold text-[#6b0f1a]"
           >
-
-            <h2
-              className="
-                text-lg
-                font-black
-                text-orange-700
-              "
-            >
-              Best Sellers
-            </h2>
-
-            <span
-              className="
-                text-xs
-                text-gray-500
-              "
-            >
-              Top 5 Models
-            </span>
-
-          </div>
-
-          {bestSellers.length ===
-          0 ? (
-            <div
-              className="
-                text-sm
-                text-gray-500
-              "
-            >
-              No sales data yet.
-            </div>
-          ) : (
-            <div className="space-y-2">
-
-              {bestSellers.map(
-                (
-                  item,
-                  index
-                ) => (
-                  <div
-                    key={index}
-                    className="
-                      flex
-                      justify-between
-                      items-center
-                      border-b
-                      border-orange-100
-                      pb-2
-                      last:border-0
-                    "
-                  >
-
-                    <div
-                      className="
-                        text-sm
-                        font-medium
-                      "
-                    >
-                      {item.name}
-                    </div>
-
-                    <div
-                      className="
-                        bg-green-100
-                        text-green-700
-                        px-3
-                        py-1
-                        rounded-full
-                        text-xs
-                        font-bold
-                      "
-                    >
-                      {item.sold}
-                    </div>
-
-                  </div>
-                )
-              )}
-
-            </div>
-          )}
-
+            Analyze →
+          </Link>
         </div>
 
-        {/* LOW STOCK */}
-        <div
-          className="
-            bg-white
-            rounded-2xl
-            border
-            border-red-200
-            p-4
-            shadow-sm
-          "
-        >
-
-          <div
-            className="
-              flex
-              items-center
-              justify-between
-              mb-3
-            "
-          >
-
-            <h2
-              className="
-                text-lg
-                font-black
-                text-red-600
-              "
-            >
-              Low Stock Models
-            </h2>
-
-            <span
-              className="
-                bg-red-100
-                text-red-700
-                px-3
-                py-1
-                rounded-full
-                text-xs
-                font-semibold
-              "
-            >
-              Attention
-            </span>
-
-          </div>
-
-         {summary.inventoryCount === 0 ? (
-  <div
-    className="
-      text-gray-500
-      font-medium
-      text-sm
-    "
-  >
-    No inventory data available.
-  </div>
-) : lowStock.length === 0 ? (
-  <div
-    className="
-      text-green-600
-      font-medium
-      text-sm
-    "
-  >
-    Inventory levels are healthy.
-  </div>
-          ) : (
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-3">
+          {branches.map((branch) => (
             <div
-              className="
-                flex
-                flex-wrap
-                gap-2
-              "
+              key={branch.id}
+              className="rounded-lg border p-3"
             >
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-bold truncate">
+                  {branch.name}
+                </p>
 
-              {lowStock.map(
-                (
-                  item,
-                  index
-                ) => (
-                  <div
-                    key={index}
-                    className="
-                      bg-red-50
-                      border
-                      border-red-200
-                      px-3
-                      py-2
-                      rounded-xl
-                    "
-                  >
+                <span className="text-sm font-black">
+                  {branch.units}
+                </span>
+              </div>
 
-                    <div
-                      className="
-                        text-sm
-                        font-semibold
-                      "
-                    >
-                      {item.brand}
-                      {" "}
-                      {item.model}
-                    </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {branch.models} model variants
+              </p>
 
-                    <div
-                      className="
-                        text-xs
-                        text-red-600
-                        font-bold
-                        mt-1
-                      "
-                    >
-                      Remaining:
-                      {" "}
-                      {item.count}
-                    </div>
-
-                  </div>
-                )
-              )}
-
+              <p className="text-sm font-semibold mt-2">
+                {money(branch.stockValue)}
+              </p>
             </div>
-          )}
-
+          ))}
         </div>
-
       </div>
-            {/* ===================== */}
-      {/* RECENT RETURNS */}
-      {/* ===================== */}
-      <div
-        className="
-          bg-white
-          rounded-2xl
-          border
-          border-orange-100
-          p-4
-          shadow-sm
-        "
-      >
-
-        <div
-          className="
-            flex
-            items-center
-            justify-between
-            mb-3
-          "
-        >
-
-          <h2
-            className="
-              text-lg
-              font-black
-              text-red-600
-            "
-          >
-            Recent Returns
-          </h2>
-
-          <span
-            className="
-              text-xs
-              text-gray-500
-            "
-          >
-            Latest 5
-          </span>
-
-        </div>
-
-        {recentReturns.length ===
-        0 ? (
-          <div
-            className="
-              text-sm
-              text-gray-500
-            "
-          >
-            No recent returns.
-          </div>
-        ) : (
-          <div
-            className="
-              grid
-              md:grid-cols-2
-              xl:grid-cols-3
-              gap-3
-            "
-          >
-
-            {recentReturns.map(
-              (
-                sale
-              ) => (
-                <div
-                  key={
-                    sale._id
-                  }
-                  className="
-                    border
-                    border-red-200
-                    rounded-xl
-                    p-3
-                    bg-red-50
-                  "
-                >
-
-                  <div
-                    className="
-                      flex
-                      justify-between
-                      items-start
-                    "
-                  >
-
-                    <div>
-
-                      <h3
-                        className="
-                          font-semibold
-                          text-sm
-                        "
-                      >
-                        {
-                          sale.customerName
-                        }
-                      </h3>
-
-                      <p
-                        className="
-                          text-xs
-                          text-gray-500
-                          mt-1
-                        "
-                      >
-                        Receipt:
-                        {" "}
-                        {
-                          sale.receiptNumber
-                        }
-                      </p>
-
-                      {isManager &&
-                        sale.branch && (
-                          <p
-                            className="
-                              text-xs
-                              text-gray-500
-                            "
-                          >
-                            Branch:
-                            {" "}
-                            {
-                              sale
-                                .branch
-                                ?.name
-                            }
-                          </p>
-                        )}
-
-                    </div>
-
-                    <span
-                      className="
-                        bg-red-100
-                        text-red-700
-                        px-2
-                        py-1
-                        rounded-full
-                        text-[10px]
-                        font-bold
-                      "
-                    >
-                      RETURNED
-                    </span>
-
-                  </div>
-
-                </div>
-              )
-            )}
-
-          </div>
-        )}
-
-      </div>
-
-      {/* ===================== */}
-      {/* RECENT TRANSACTIONS */}
-      {/* ===================== */}
-      <div
-        className="
-          bg-white
-          rounded-2xl
-          border
-          border-orange-100
-          p-4
-          shadow-sm
-        "
-      >
-
-        <div
-          className="
-            flex
-            items-center
-            justify-between
-            mb-4
-          "
-        >
-
-          <h2
-            className="
-              text-lg
-              font-black
-              text-orange-700
-            "
-          >
-            Recent Transactions
-          </h2>
-
-          <span
-            className="
-              text-xs
-              text-gray-500
-            "
-          >
-            Latest 5
-          </span>
-
-        </div>
-
-        {/* DESKTOP TABLE */}
-        <div
-          className="
-            hidden
-            lg:block
-            overflow-x-auto
-          "
-        >
-
-          <table
-            className="
-              w-full
-            "
-          >
-
-            <thead>
-
-              <tr
-                className="
-                  border-b
-                  border-orange-100
-                "
-              >
-
-                <th
-                  className="
-                    text-left
-                    py-3
-                    text-xs
-                    uppercase
-                    tracking-wide
-                  "
-                >
-                  Customer
-                </th>
-
-                {isManager && (
-                  <th
-                    className="
-                      text-left
-                      py-3
-                      text-xs
-                      uppercase
-                    "
-                  >
-                    Branch
-                  </th>
-                )}
-
-                <th
-                  className="
-                    text-left
-                    py-3
-                    text-xs
-                    uppercase
-                  "
-                >
-                  Payment
-                </th>
-
-                <th
-                  className="
-                    text-left
-                    py-3
-                    text-xs
-                    uppercase
-                  "
-                >
-                  Receipt
-                </th>
-
-                <th
-                  className="
-                    text-left
-                    py-3
-                    text-xs
-                    uppercase
-                  "
-                >
-                  Amount
-                </th>
-
-                <th
-                  className="
-                    text-left
-                    py-3
-                    text-xs
-                    uppercase
-                  "
-                >
-                  Status
-                </th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {recentSales.length ===
-              0 ? (
-                <tr>
-
-                  <td
-                    colSpan={
-                      isManager
-                        ? 6
-                        : 5
-                    }
-                    className="
-                      py-6
-                      text-center
-                      text-sm
-                      text-gray-500
-                    "
-                  >
-                    No transactions
-                    found.
-                  </td>
-
-                </tr>
-              ) : (
-                recentSales.map(
-                  (
-                    sale
-                  ) => (
-                    <tr
-                      key={
-                        sale._id
-                      }
-                      className="
-                        border-b
-                        border-orange-50
-                        last:border-0
-                      "
-                    >
-
-                      <td
-                        className="
-                          py-3
-                          text-sm
-                          font-medium
-                        "
-                      >
-                        {
-                          sale.customerName
-                        }
-                      </td>
-
-                      {isManager && (
-                        <td
-                          className="
-                            py-3
-                            text-sm
-                          "
-                        >
-                          {
-                            sale.branch
-                              ?.name
-                          }
-                        </td>
-                      )}
-
-                      <td
-                        className="
-                          py-3
-                          text-sm
-                        "
-                      >
-                        {
-                          sale.paymentMethod
-                        }
-                      </td>
-
-                      <td
-                        className="
-                          py-3
-                          text-xs
-                          font-mono
-                        "
-                      >
-                        {
-                          sale.receiptNumber
-                        }
-                      </td>
-
-                      <td
-                        className="
-                          py-3
-                          text-sm
-                          font-bold
-                          text-green-600
-                        "
-                      >
-                        UGX{" "}
-                        {formatCurrency(
-                          sale.totalAmount
-                        )}
-                      </td>
-
-                      <td
-                        className="
-                          py-3
-                        "
-                      >
-                        {sale.status ===
-                        "Returned" ? (
-                          <span
-                            className="
-                              bg-red-100
-                              text-red-700
-                              px-3
-                              py-1
-                              rounded-full
-                              text-xs
-                              font-semibold
-                            "
-                          >
-                            Returned
-                          </span>
-                        ) : (
-                          <span
-                            className="
-                              bg-green-100
-                              text-green-700
-                              px-3
-                              py-1
-                              rounded-full
-                              text-xs
-                              font-semibold
-                            "
-                          >
-                            Completed
-                          </span>
-                        )}
-                      </td>
-
-                    </tr>
-                  )
-                )
-              )}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-        {/* MOBILE CARDS */}
-        <div
-          className="
-            lg:hidden
-            space-y-2
-          "
-        >
-
-          {recentSales.length ===
-          0 ? (
-            <div
-              className="
-                py-6
-                text-center
-                text-sm
-                text-gray-500
-              "
-            >
-              No transactions
-              found.
-            </div>
-          ) : (
-            recentSales.map(
-              (
-                sale
-              ) => (
-                <div
-                  key={
-                    sale._id
-                  }
-                  className="
-                    border
-                    border-orange-100
-                    rounded-xl
-                    p-3
-                  "
-                >
-
-                  <div
-                    className="
-                      flex
-                      justify-between
-                      items-start
-                    "
-                  >
-
-                    <div>
-
-                      <h3
-                        className="
-                          font-semibold
-                          text-sm
-                        "
-                      >
-                        {
-                          sale.customerName
-                        }
-                      </h3>
-
-                      <p
-                        className="
-                          text-xs
-                          text-gray-500
-                        "
-                      >
-                        Receipt:
-                        {" "}
-                        {
-                          sale.receiptNumber
-                        }
-                      </p>
-
-                      {isManager &&
-                        sale.branch && (
-                          <p
-                            className="
-                              text-xs
-                              text-gray-500
-                            "
-                          >
-                            Branch:
-                            {" "}
-                            {
-                              sale
-                                .branch
-                                ?.name
-                            }
-                          </p>
-                        )}
-
-                      <p
-                        className="
-                          text-xs
-                          text-gray-500
-                        "
-                      >
-                        {
-                          sale.paymentMethod
-                        }
-                      </p>
-
-                    </div>
-
-                    <div
-                      className="
-                        text-right
-                      "
-                    >
-
-                      <p
-                        className="
-                          text-green-600
-                          font-bold
-                          text-sm
-                        "
-                      >
-                        UGX{" "}
-                        {formatCurrency(
-                          sale.totalAmount
-                        )}
-                      </p>
-
-                      <div className="mt-1">
-
-                        {sale.status ===
-                        "Returned" ? (
-                          <span
-                            className="
-                              bg-red-100
-                              text-red-700
-                              px-2
-                              py-1
-                              rounded-full
-                              text-[10px]
-                              font-semibold
-                            "
-                          >
-                            Returned
-                          </span>
-                        ) : (
-                          <span
-                            className="
-                              bg-green-100
-                              text-green-700
-                              px-2
-                              py-1
-                              rounded-full
-                              text-[10px]
-                              font-semibold
-                            "
-                          >
-                            Completed
-                          </span>
-                        )}
-
-                      </div>
-
-                    </div>
-
-                  </div>
-
-                </div>
-              )
-            )
-          )}
-
-        </div>
-
-      </div>
-
     </div>
   );
 }
