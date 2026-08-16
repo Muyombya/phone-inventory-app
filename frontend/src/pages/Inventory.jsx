@@ -378,8 +378,9 @@ function Inventory() {
             {historyLoading ? <div className="rounded-xl border bg-white p-6 text-sm text-gray-500">Loading complete product history...</div> : null}
 
             {productHistory && !historyLoading && (
-              <section className="rounded-xl border bg-white p-4 shadow-sm">
-                <div className="flex flex-col gap-4 border-b pb-4 md:flex-row md:items-start md:justify-between"><div><p className="text-xs font-bold uppercase tracking-wider text-gray-500">GadgetShop Product History</p><h2 className="mt-1 text-2xl font-black text-[#6b0f1a]">{productHistory.product.brand} {productHistory.product.model}</h2><p className="mt-1 text-sm text-gray-500">{productHistory.product.ram || "Any RAM"} • {productHistory.product.storage || "Any Storage"}</p></div><button onClick={() => window.print()} className="rounded-lg border px-4 py-2 text-sm font-bold">Print Product History</button></div>
+              <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 p-4 md:p-8">
+              <section role="dialog" aria-modal="true" aria-label="Product history" className="mx-auto my-4 w-full max-w-6xl rounded-xl border bg-white p-4 shadow-xl">
+                <div className="flex flex-col gap-4 border-b pb-4 md:flex-row md:items-start md:justify-between"><div><p className="text-xs font-bold uppercase tracking-wider text-gray-500">GadgetShop Product History</p><h2 className="mt-1 text-2xl font-black text-[#6b0f1a]">{productHistory.product.brand} {productHistory.product.model}</h2><p className="mt-1 text-sm text-gray-500">{productHistory.product.ram || "Any RAM"} • {productHistory.product.storage || "Any Storage"}</p></div><div className="flex gap-2"><button onClick={() => window.print()} className="rounded-lg border px-4 py-2 text-sm font-bold">Print Product History</button><button onClick={() => setProductHistory(null)} className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-bold text-white">Close</button></div></div>
 
                 <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-6"><KPI title="First Stocked" value={dateOnly(productHistory.lifecycle.firstStockedAt)} /><KPI title="First Purchased" value={dateOnly(productHistory.lifecycle.firstPurchasedAt)} /><KPI title="Purchased" value={productHistory.lifecycle.totalPurchased} /><KPI title="Sold" value={productHistory.lifecycle.totalSold} /><KPI title="Returned" value={productHistory.lifecycle.totalReturned} /><KPI title="Current Stock" value={productHistory.lifecycle.currentStock} /></div>
 
@@ -395,6 +396,7 @@ function Inventory() {
 
                 {historyTab === "current" && <div className="mt-5 overflow-x-auto">{productHistory.currentUnits?.length ? <table className="min-w-full text-sm"><thead><tr className="border-b bg-gray-50 text-left"><th className="px-3 py-2">IMEI</th><th className="px-3 py-2">Colour</th><th className="px-3 py-2">Branch</th><th className="px-3 py-2">Added</th></tr></thead><tbody>{productHistory.currentUnits.map((unit) => <tr key={unit.imei} className="border-b"><td className="px-3 py-2">{unit.imei}</td><td className="px-3 py-2">{unit.color}</td><td className="px-3 py-2">{unit.branch}</td><td className="px-3 py-2">{dateTime(unit.addedAt)}</td></tr>)}</tbody></table> : <div className="rounded-lg bg-gray-50 p-5 text-sm text-gray-600"><strong>Current stock is zero.</strong> The product's historical record remains available because it is sourced from permanent transaction history.</div>}</div>}
               </section>
+              </div>
             )}
           </>
         )}

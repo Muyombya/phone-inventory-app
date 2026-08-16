@@ -15,53 +15,73 @@ function todayISO() {
   return `${y}-${m}-${day}`;
 }
 
+function daysAgoISO(days) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date.toISOString().slice(0, 10);
+}
+
+function startOfMonthISO() {
+  const date = new Date();
+  return new Date(date.getFullYear(), date.getMonth(), 1)
+    .toISOString()
+    .slice(0, 10);
+}
+
+function welcomeMessage(name) {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  return `${greeting}${name ? `, ${name}` : ""}`;
+}
+
 function Dashboard() {
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const today = todayISO();
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [range, setRange] = useState("today");
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(today);
 
   useEffect(() => {
-    let mounted = true;
+    let active = true;
 
-    async function load() {
+    async function loadReport() {
       try {
         setLoading(true);
         setError("");
-
-        const day = todayISO();
-
-        const response = await api.get("/reports", {
-          params: {
-            startDate: day,
-            endDate: day,
-          },
-        });
-
-        if (mounted) {
-          setReport(response.data);
-        }
+        const response = await api.get("/reports", { params: { startDate, endDate } });
+        if (active) setReport(response.data);
       } catch (err) {
         console.error(err);
-
-        if (mounted) {
-          setError(
-            err?.response?.data?.message ||
-              "Unable to load GadgetShop dashboard."
-          );
-        }
+        if (active) setError(err?.response?.data?.message || "Unable to load GadgetShop dashboard.");
       } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     }
 
-    load();
+    loadReport();
+    return () => { active = false; };
+  }, [startDate, endDate]);
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  function applyRange(value) {
+    const currentDay = todayISO();
+    setRange(value);
+    if (value === "today") {
+      setStartDate(currentDay);
+      setEndDate(currentDay);
+    } else if (value === "7days") {
+      setStartDate(daysAgoISO(6));
+      setEndDate(currentDay);
+    } else if (value === "30days") {
+      setStartDate(daysAgoISO(29));
+      setEndDate(currentDay);
+    } else if (value === "month") {
+      setStartDate(startOfMonthISO());
+      setEndDate(currentDay);
+    }
+  }
 
   const stock = report?.stock;
   const summary = report?.summary;
@@ -102,12 +122,10 @@ function Dashboard() {
             GadgetShop
           </p>
 
-          <h1 className="text-3xl font-black mt-1">
-            Command Center
-          </h1>
+          <h1 className="text-3xl font-black mt-1">{welcomeMessage(user?.name || user?.username)}</h1>
 
           <p className="text-gray-500 mt-1">
-            What is happening today — and what needs attention.
+            Command Center · What is happening and what needs attention.
           </p>
         </div>
 
@@ -119,11 +137,31 @@ function Dashboard() {
         </Link>
       </div>
 
+      <section className="rounded-xl border bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 className="text-lg font-bold">Business Intelligence period</h2>
+            <p className="text-sm text-gray-500">Choose a quick view or set an exact reporting window.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[["today", "Today"], ["7days", "Last 7 days"], ["30days", "Last 30 days"], ["month", "This month"]].map(([value, label]) => (
+              <button key={value} type="button" onClick={() => applyRange(value)} className={`rounded-lg px-3 py-2 text-sm font-semibold ${range === value ? "bg-[#6b0f1a] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:max-w-xl">
+          <label className="text-sm font-medium text-gray-700">From<input type="date" value={startDate} max={endDate} onChange={(event) => { setRange("custom"); setStartDate(event.target.value); }} className="mt-1 block w-full rounded-lg border px-3 py-2" /></label>
+          <label className="text-sm font-medium text-gray-700">To<input type="date" value={endDate} min={startDate} max={todayISO()} onChange={(event) => { setRange("custom"); setEndDate(event.target.value); }} className="mt-1 block w-full rounded-lg border px-3 py-2" /></label>
+        </div>
+      </section>
+
       {/* =========================
           DAILY INTELLIGENCE BRIEF
           Full-width attention layer
       ========================= */}
-      <DailyIntelligenceBrief />
+      <DailyIntelligenceBrief startDate={startDate} endDate={endDate} />
 
       {/* =========================
           CORE KPI STRIP
