@@ -470,6 +470,14 @@ const createSale = async (req, res) => {
       entityId:
         sale._id,
 
+      itemName:
+        sale.items?.length === 1
+          ? `${sale.items[0].brand} ${sale.items[0].model} (${sale.items[0].imei})`
+          : `${sale.items?.length || 0} item sale`,
+
+      itemDetails:
+        getSaleAuditDetails(sale),
+
       description:
         `Created sale ${sale.receiptNumber}`,
     });

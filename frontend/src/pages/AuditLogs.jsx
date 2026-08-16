@@ -72,6 +72,17 @@ const getActionStyle =
       `;
     }
 
+    if (
+      value.includes(
+        "add_phone"
+      )
+    ) {
+      return `
+        bg-blue-100
+        text-blue-700
+      `;
+    }
+
     return `
       bg-blue-100
       text-blue-700
@@ -554,12 +565,57 @@ function AuditLogs() {
       ) {
         filtered =
           filtered.filter(
-            (log) =>
-              log.action
-                ?.toLowerCase()
-                .includes(
-                  actionFilter
-                )
+            (log) => {
+              const action =
+                String(
+                  log.action || ""
+                ).toUpperCase();
+
+              switch (
+                actionFilter
+              ) {
+                case "sale":
+                  return [
+                    "SALE",
+                    "CREATE_SALE",
+                  ].includes(
+                    action
+                  );
+
+                case "return":
+                  return action ===
+                    "RETURN_SALE";
+
+                case "transfer":
+                  return action ===
+                    "TRANSFER";
+
+                case "add_phone":
+                  return action ===
+                    "ADD_PHONE";
+
+                case "update":
+                  return [
+                    "UPDATE_PHONE",
+                    "UPDATE",
+                    "EDIT_PHONE",
+                  ].includes(
+                    action
+                  );
+
+                case "delete":
+                  return [
+                    "DELETE_PHONE",
+                    "DELETE_SALE",
+                    "DELETE",
+                  ].includes(
+                    action
+                  );
+
+                default:
+                  return true;
+              }
+            }
           );
       }
 
@@ -696,7 +752,12 @@ const getAuditDescription = (log) => {
   }
 
   if (log.action === "ADD_PHONE") {
-    return `You added ${specs || log.itemName || "a phone"}${serials ? ` (Serial No: ${serials})` : ""} to inventory.`;
+    const phoneDescription =
+      specs ||
+      log.itemName ||
+      "a phone";
+
+    return `You added ${phoneDescription}${serials ? ` (Serial No: ${serials})` : ""} to ${log.branch?.name || "inventory"}.`;
   }
 
   return log.description || `${log.action || "System action"} recorded.`;
@@ -1165,7 +1226,7 @@ const getAuditDetails = (log) => {
             </option>
 
             <option value="sale">
-              Sales
+              Sale
             </option>
 
             <option value="return">
@@ -1176,16 +1237,16 @@ const getAuditDetails = (log) => {
               Transfers
             </option>
 
-            <option value="create">
-              Create
+            <option value="add_phone">
+              Add Phone
             </option>
 
             <option value="update">
-              Update
+              Updates
             </option>
 
             <option value="delete">
-              Delete
+              Deletes
             </option>
           </select>
 
