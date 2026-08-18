@@ -97,14 +97,9 @@ router.delete(
   deletePhone
 );
 
-// ==============================
-// SELL PHONE
-// ==============================
-router.post(
-  "/sell/:id",
-  protect,
-  sellPhone
-);
+
+
+
 
 // ==============================
 // TRANSFER PHONE
