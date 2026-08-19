@@ -10,8 +10,6 @@ import {
 
 import api from "../services/api";
 
-import * as XLSX from "xlsx";
-
 import { saveAs }
   from "file-saver";
 
@@ -541,7 +539,8 @@ function SalesHistory() {
       0
     );
 
-  function exportToExcel() {
+  async function exportToExcel() {
+    const XLSX = await import("xlsx");
     const exportData =
       filteredSales.map(
         (sale) => ({

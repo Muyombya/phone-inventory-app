@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import Tesseract from "tesseract.js";
 
 const BarcodeScanner = ({
   onScanSuccess,
@@ -85,6 +84,8 @@ const top =
         roiWidth,
         roiHeight
       );
+
+      const Tesseract = await import("tesseract.js");
 
       const {
         data: { text },

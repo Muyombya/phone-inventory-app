@@ -9,7 +9,7 @@ import {
 
 import api from "../services/api";
 
-import logo from "../assets/logo1.png";
+import logo from "../assets/Logo.png";
 
 function Receipt() {
   const { id } =
