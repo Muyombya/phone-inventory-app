@@ -480,6 +480,8 @@ const createSale = async (req, res) => {
 
       description:
         `Created sale ${sale.receiptNumber}`,
+
+      session,
     });
 
     // =====================================
