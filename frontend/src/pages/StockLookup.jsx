@@ -55,6 +55,9 @@ function StockLookup() {
   const [phones, setPhones] =
     useState([]);
 
+  const [branches, setBranches] =
+    useState([]);
+
   const [loading, setLoading] =
     useState(true);
 
@@ -67,27 +70,34 @@ function StockLookup() {
   ] = useState(null);
 
   // =========================
-  // FETCH PHONES
+  // FETCH STOCK LOOKUP DATA
   // =========================
-  async function fetchPhones() {
+  async function fetchStockLookup() {
     try {
-      const res =
+      const response =
         await api.get(
-          "/phones"
+          "/phones/stock-lookup"
         );
 
       setPhones(
-        res.data
+        response.data?.phones || []
+      );
+
+      setBranches(
+        response.data?.branches || []
       );
     } catch (error) {
-      console.log(error);
+      console.log(
+        "Stock lookup fetch error:",
+        error
+      );
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    fetchPhones();
+    fetchStockLookup();
   }, []);
 
   // =========================
@@ -258,21 +268,24 @@ branch
       0
     );
 
-  const branchSet =
-    new Set();
-
-  results.forEach(
-    (item) => {
-      Object.keys(
-        item.branches
-      ).forEach(
-        (branch) =>
-          branchSet.add(
-            branch
+  const branchNames =
+    useMemo(
+      () =>
+        branches
+          .map(
+            (branch) =>
+              branch?.name
           )
-      );
-    }
-  );
+          .filter(Boolean)
+          .sort(
+            (a, b) =>
+              a.localeCompare(b)
+          ),
+      [branches]
+    );
+
+  const branchSet =
+    new Set(branchNames);
 
   const lowStockCount =
     results.filter(
@@ -362,7 +375,7 @@ branch
         <KPI
           title="Branches"
           value={
-            branchSet.size
+            branchNames.length
           }
           color="text-blue-600"
         />
@@ -597,7 +610,7 @@ branch
             className="
               grid
               grid-cols-2
-              lg:grid-cols-5
+              lg:grid-cols-7
               gap-3
               mb-6
             "
@@ -613,11 +626,39 @@ branch
             <KPI
               title="Branches"
               value={
-                Object.keys(
-                  selectedVariant.branches
-                ).length
+                branchNames.length
               }
               color="text-blue-600"
+            />
+
+            <KPI
+              title="Branches With Stock"
+              value={
+                Object.values(
+                  selectedVariant.branches || {}
+                ).filter(
+                  (qty) =>
+                    Number(qty) > 0
+                ).length
+              }
+              color="text-emerald-600"
+            />
+
+            <KPI
+              title="Branches Out of Stock"
+              value={
+                Math.max(
+                  branchNames.length -
+                    Object.values(
+                      selectedVariant.branches || {}
+                    ).filter(
+                      (qty) =>
+                        Number(qty) > 0
+                    ).length,
+                  0
+                )
+              }
+              color="text-red-600"
             />
 
             <KPI
@@ -758,15 +799,14 @@ branch
           </thead>
 
           <tbody>
-            {Object.entries(
-              selectedVariant.branchColors || {}
-            ).map(
-              (
-                [
-                  branch,
-                  colorMap,
-                ]
-              ) => {
+            {branchNames.map(
+              (branch) => {
+                const colorMap =
+                  selectedVariant
+                    .branchColors?.[
+                    branch
+                  ] || {};
+
                 const rowTotal =
                   colors.reduce(
                     (
@@ -780,13 +820,21 @@ branch
                     0
                   );
 
+                const outOfStock =
+                  rowTotal === 0;
+
                 return (
                   <tr
                     key={branch}
-                    className="
+                    className={`
                       border-b
                       border-orange-50
-                    "
+                      ${
+                        outOfStock
+                          ? "bg-red-50/50"
+                          : ""
+                      }
+                    `}
                   >
                     <td
                       className="
@@ -794,33 +842,74 @@ branch
                         font-medium
                       "
                     >
-                      {branch}
+                      <div
+                        className="
+                          flex
+                          items-center
+                          gap-2
+                        "
+                      >
+                        <span>
+                          {branch}
+                        </span>
+
+                        {outOfStock && (
+                          <span
+                            className="
+                              rounded-full
+                              bg-red-100
+                              px-2
+                              py-0.5
+                              text-[10px]
+                              font-black
+                              uppercase
+                              tracking-wide
+                              text-red-700
+                            "
+                          >
+                            Out of stock
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {colors.map(
-                      (
-                        color
-                      ) => (
+                      (color) => (
                         <td
                           key={color}
-                          className="
+                          className={`
                             text-center
                             font-bold
-                          "
+                            ${
+                              (
+                                colorMap[
+                                  color
+                                ] || 0
+                              ) === 0
+                                ? "text-gray-400"
+                                : ""
+                            }
+                          `}
                         >
-                          {colorMap[
-                            color
-                          ] || 0}
+                          {
+                            colorMap[
+                              color
+                            ] || 0
+                          }
                         </td>
                       )
                     )}
 
                     <td
-                      className="
+                      className={`
                         text-right
                         font-bold
-                        text-orange-700
-                      "
+                        ${
+                          outOfStock
+                            ? "text-red-700"
+                            : "text-orange-700"
+                        }
+                      `}
                     >
                       {rowTotal}
                     </td>

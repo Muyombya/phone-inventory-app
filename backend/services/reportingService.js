@@ -844,32 +844,143 @@ function buildStockAttentionMessage(stock) {
   return parts.join(" ") || "No critical or low-stock models require attention.";
 }
 
-function buildTransferCandidates(stock) {
-  const branchNames = (stock.branches || []).map((b) => b.name);
+function productIdentity(brand, model, ram, storage) {
+  return [
+    String(brand || "").trim().toLowerCase(),
+    String(model || "").trim().toLowerCase(),
+    String(ram || "").trim().toLowerCase(),
+    String(storage || "").trim().toLowerCase(),
+  ].join("|");
+}
+
+function buildBranchDemandMap(sales) {
+  const demand = {};
+
+  for (const transaction of sales?.transactions || []) {
+    const branch = String(transaction.branch || "").trim();
+    if (!branch) continue;
+
+    const key = productIdentity(
+      transaction.brand,
+      transaction.model,
+      transaction.ram,
+      transaction.storage
+    );
+
+    if (!demand[key]) demand[key] = {};
+    demand[key][branch] = (demand[key][branch] || 0) + 1;
+  }
+
+  return demand;
+}
+
+function buildTransferCandidates(stock, sales) {
+  const branchNames = (stock.branches || [])
+    .map((branch) => String(branch.name || "").trim())
+    .filter(Boolean);
+
   if (branchNames.length < 2) return [];
 
+  const demandMap = buildBranchDemandMap(sales);
   const candidates = [];
-  for (const model of stock.models || []) {
-    const entries = Object.entries(model.branches || {});
-    if (!entries.length) continue;
-    const destinations = branchNames.filter((name) => !model.branches[name]);
-    const donors = entries.filter(([, units]) => Number(units) > DEFAULT_THRESHOLD);
-    if (!destinations.length || !donors.length) continue;
 
-    const donor = donors.sort((a, b) => Number(b[1]) - Number(a[1]))[0];
-    const destination = destinations[0];
-    const quantity = Math.max(1, Math.min(2, Math.floor(Number(donor[1]) - DEFAULT_THRESHOLD)));
-    candidates.push({
-      brand: model.brand,
-      model: model.model,
-      ram: model.ram,
-      storage: model.storage,
-      fromBranch: donor[0],
-      toBranch: destination,
-      quantity,
-    });
+  for (const model of stock.models || []) {
+    const key = productIdentity(
+      model.brand,
+      model.model,
+      model.ram,
+      model.storage
+    );
+
+    const branchStock = model.branches || {};
+
+    // Every active branch is considered. A branch with zero stock is a
+    // replenishment candidate even when it has no recent sales; the
+    // recommendation confidence is simply lower in that case.
+    const destinations = branchNames
+      .map((name) => ({
+        name,
+        stock: Number(branchStock[name] || 0),
+        demand: Number(demandMap[key]?.[name] || 0),
+      }))
+      .filter((branch) => branch.stock === 0);
+
+    if (!destinations.length) continue;
+
+    const donors = branchNames
+      .map((name) => ({
+        name,
+        stock: Number(branchStock[name] || 0),
+        demand: Number(demandMap[key]?.[name] || 0),
+      }))
+      .filter((branch) => branch.stock > 0);
+
+    if (!donors.length) continue;
+
+    for (const destination of destinations) {
+      const rankedDonors = [...donors].sort((a, b) => {
+        const aSurplus = Math.max(0, a.stock - DEFAULT_THRESHOLD);
+        const bSurplus = Math.max(0, b.stock - DEFAULT_THRESHOLD);
+
+        return (
+          bSurplus - aSurplus ||
+          a.demand - b.demand ||
+          b.stock - a.stock
+        );
+      });
+
+      const donor = rankedDonors.find(
+        (candidate) =>
+          candidate.stock > DEFAULT_THRESHOLD ||
+          (candidate.stock > 1 && candidate.demand === 0)
+      );
+
+      if (!donor) continue;
+
+      const safeSurplus = Math.max(
+        1,
+        donor.stock - DEFAULT_THRESHOLD
+      );
+
+      const quantity = Math.max(
+        1,
+        Math.min(2, safeSurplus, destination.demand || 1)
+      );
+
+      const confidence = destination.demand > 0 ? "strong" : "review";
+
+      candidates.push({
+        brand: model.brand,
+        model: model.model,
+        ram: model.ram,
+        storage: model.storage,
+        fromBranch: donor.name,
+        toBranch: destination.name,
+        quantity,
+        destinationStock: destination.stock,
+        destinationDemand: destination.demand,
+        sourceStock: donor.stock,
+        sourceDemand: donor.demand,
+        confidence,
+        branchPosition: branchNames.map((name) => ({
+          branch: name,
+          units: Number(branchStock[name] || 0),
+          recentSales: Number(demandMap[key]?.[name] || 0),
+        })),
+      });
+    }
   }
-  return candidates.slice(0, 5);
+
+  return candidates
+    .sort((a, b) => {
+      const confidenceScore = { strong: 2, review: 1 };
+      return (
+        confidenceScore[b.confidence] - confidenceScore[a.confidence] ||
+        b.destinationDemand - a.destinationDemand ||
+        b.sourceStock - a.sourceStock
+      );
+    })
+    .slice(0, 5);
 }
 
 function buildLocalInsights(sales, stock, catalogReport) {
@@ -923,14 +1034,35 @@ function buildLocalInsights(sales, stock, catalogReport) {
     });
   }
 
-  const transfers = buildTransferCandidates(stock);
+  const transfers = buildTransferCandidates(stock, sales);
   if (transfers.length) {
     const t = transfers[0];
     insights.push({
       type: "opportunity",
       title: "Internal transfer opportunity",
-      message: `Consider moving ${t.quantity} ${t.brand} ${t.model} unit(s) from ${t.fromBranch} to ${t.toBranch}.`,
-      evidence: [`Source: ${t.fromBranch}`, `Destination: ${t.toBranch}`, `Suggested quantity: ${t.quantity}`],
+      message:
+        t.confidence === "strong"
+          ? `${t.toBranch} has 0 ${t.brand} ${t.model} units and recorded ${t.destinationDemand} recent sale(s). Consider moving ${t.quantity} unit(s) from ${t.fromBranch}, which has ${t.sourceStock} available.`
+          : `${t.toBranch} has 0 ${t.brand} ${t.model} units. ${t.fromBranch} has ${t.sourceStock} available, so a cautious ${t.quantity}-unit replenishment is available for management review.`,
+      evidence: [
+        `Destination: ${t.toBranch} — stock: 0`,
+        `Destination recent sales: ${t.destinationDemand}`,
+        `Source: ${t.fromBranch} — stock: ${t.sourceStock}`,
+        `Source recent sales: ${t.sourceDemand}`,
+        `Suggested quantity: ${t.quantity}`,
+        `Confidence: ${t.confidence === "strong" ? "Strong" : "Review required"}`,
+      ],
+      transfer: {
+        brand: t.brand,
+        model: t.model,
+        ram: t.ram,
+        storage: t.storage,
+        fromBranch: t.fromBranch,
+        toBranch: t.toBranch,
+        quantity: t.quantity,
+        confidence: t.confidence,
+        branchPosition: t.branchPosition,
+      },
       drillDown: { label: "Review stock position", path: "/stock-lookup", params: { search: `${t.brand} ${t.model}` } },
     });
   }

@@ -6,6 +6,7 @@ const router =
 
 const {
   getPhones,
+  getStockLookup,
   getPhoneById,
   addPhone,
   updatePhone,
@@ -13,9 +14,10 @@ const {
   getBulkInventoryPreview,
   getBulkOptions,
   deletePhone,
-  sellPhone,
   transferPhone,
-} = require("../controllers/phoneController");
+} = require(
+  "../controllers/phoneController"
+);
 
 const {
   protect,
@@ -34,13 +36,47 @@ router.get(
   getPhones
 );
 
+
+
 // ==============================
-// BULK INVENTORY OPTIONS
+// STOCK LOOKUP
+// Company-wide read-only stock view.
 // ==============================
 router.get(
-  "/bulk-options",
+  "/stock-lookup",
   protect,
-  getBulkOptions
+  getStockLookup
+);
+
+// ==============================
+// GET SINGLE PHONE
+// ==============================
+router.get(
+  "/:id",
+  protect,
+  getPhoneById
+);
+
+
+
+// ==============================
+// ADD PHONE
+// ==============================
+router.post(
+  "/",
+  protect,
+  addPhone
+);
+
+
+
+// ==============================
+// UPDATE PHONE
+// ==============================
+router.put(
+  "/:id",
+  protect,
+  updatePhone
 );
 
 // ==============================
@@ -53,26 +89,9 @@ router.get(
 );
 
 // ==============================
-// GET SINGLE PHONE
-// ==============================
-router.get(
-  "/:id",
-  protect,
-  getPhoneById
-);
-
-// ==============================
-// ADD PHONE
-// ==============================
-router.post(
-  "/",
-  protect,
-  addPhone
-);
-
-// ==============================
 // BULK INVENTORY UPDATE
 // ==============================
+
 router.put(
   "/bulk-update",
   protect,
@@ -80,12 +99,12 @@ router.put(
 );
 
 // ==============================
-// UPDATE PHONE
+// BULK INVENTORY OPTIONS
 // ==============================
-router.put(
-  "/:id",
+router.get(
+  "/bulk-options",
   protect,
-  updatePhone
+  getBulkOptions
 );
 
 // ==============================

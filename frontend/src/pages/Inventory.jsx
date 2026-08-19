@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../services/api";
-import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import PhoneCatalogue from "./PhoneCatalogue";
 
 const LOW_STOCK_LIMIT = 3;
 
@@ -71,6 +71,10 @@ function Inventory() {
     } else if (requestedTab === "current") {
       setTab("current");
       if (requestedSearch) setSearch(requestedSearch);
+    } else if (requestedTab === "balancing" && isManager) {
+      setTab("balancing");
+    } else if (requestedTab === "catalogue") {
+      setTab("catalogue");
     }
   }, [searchParams]);
 
@@ -263,7 +267,36 @@ function Inventory() {
     ? branches.find((branch) => String(branch._id) === String(stockScope))?.name || "Selected Branch"
     : isManager ? "Company • All Branches" : "Your Branch";
 
-  function exportToExcel() {
+  const balancingRows = useMemo(() => {
+    if (!isManager || !Array.isArray(stockReport?.models) || !Array.isArray(stockReport?.branches)) return [];
+    const branchNames = stockReport.branches.map((b) => String(b.name || "").trim()).filter(Boolean);
+    const rows = [];
+    for (const model of stockReport.models) {
+      const positions = branchNames.map((branchName) => {
+        const units = Number(model.branches?.[branchName] || 0);
+        const status = units === 0 ? "OUT" : units === 1 ? "CRITICAL" : units <= LOW_STOCK_LIMIT ? "LOW" : "HEALTHY";
+        return { branchName, units, status };
+      });
+      const destinations = positions.filter((p) => p.status !== "HEALTHY").sort((a,b) => a.units-b.units);
+      const donors = positions.filter((p) => p.units > LOW_STOCK_LIMIT).sort((a,b) => b.units-a.units);
+      for (const destination of destinations) {
+        const donor = donors.find((p) => p.branchName !== destination.branchName);
+        if (!donor) continue;
+        rows.push({ key: `${model.brand}|${model.model}|${model.ram}|${model.storage}|${destination.branchName}|${donor.branchName}`, brand:model.brand, model:model.model, ram:model.ram, storage:model.storage, destination:destination.branchName, destinationUnits:destination.units, destinationStatus:destination.status, source:donor.branchName, sourceUnits:donor.units, quantity:1, priority:destination.status === "OUT" || destination.status === "CRITICAL" ? "HIGH" : "REVIEW" });
+      }
+    }
+    return rows.sort((a,b) => ({HIGH:0,REVIEW:1}[a.priority]-({HIGH:0,REVIEW:1}[b.priority]) || a.destinationUnits-b.destinationUnits || b.sourceUnits-a.sourceUnits));
+  }, [isManager, stockReport]);
+
+  const balancingSummary = useMemo(() => ({
+    opportunities: balancingRows.length,
+    high: balancingRows.filter((r) => r.priority === "HIGH").length,
+    review: balancingRows.filter((r) => r.priority === "REVIEW").length,
+    destinations: new Set(balancingRows.map((r) => r.destination)).size,
+  }), [balancingRows]);
+
+  async function exportToExcel() {
+    const XLSX = await import("xlsx");
     const data = filteredPhones.map((phone) => ({
       Brand: phone.brand,
       Model: phone.model,
@@ -323,7 +356,12 @@ function Inventory() {
           <div className="flex flex-wrap gap-2"><button onClick={exportToExcel} className="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white">Export Excel</button><button onClick={printInventory} className="rounded-lg bg-[#6b0f1a] px-4 py-2 text-sm font-bold text-white">Print Inventory Report</button></div>
         </header>
 
-        <nav className="flex flex-wrap gap-2"><button onClick={() => changeTab("current")} className={`rounded-lg px-4 py-2 text-sm font-bold ${tab === "current" ? "bg-[#6b0f1a] text-white" : "border bg-white"}`}>Current Stock</button><button onClick={() => changeTab("history")} className={`rounded-lg px-4 py-2 text-sm font-bold ${tab === "history" ? "bg-[#6b0f1a] text-white" : "border bg-white"}`}>Product History</button></nav>
+        <nav className="flex flex-wrap gap-2">
+          <button onClick={() => changeTab("current")} className={`rounded-lg px-4 py-2 text-sm font-bold ${tab === "current" ? "bg-[#6b0f1a] text-white" : "border bg-white"}`}>Current Stock</button>
+          <button onClick={() => changeTab("history")} className={`rounded-lg px-4 py-2 text-sm font-bold ${tab === "history" ? "bg-[#6b0f1a] text-white" : "border bg-white"}`}>Product History</button>
+          {isManager && <button onClick={() => changeTab("balancing")} className={`rounded-lg px-4 py-2 text-sm font-bold ${tab === "balancing" ? "bg-[#6b0f1a] text-white" : "border bg-white"}`}>Stock Balancing</button>}
+          <button onClick={() => changeTab("catalogue")} className={`rounded-lg px-4 py-2 text-sm font-bold ${tab === "catalogue" ? "bg-[#f97316] text-white" : "border bg-white"}`}>Phone Catalogue</button>
+        </nav>
 
         {tab === "current" && (
           <>
@@ -366,6 +404,35 @@ function Inventory() {
 
             <section className="rounded-xl border bg-white shadow-sm overflow-hidden"><div className="border-b p-4"><h2 className="font-black">Current Inventory • {scopeLabel}</h2><p className="mt-1 text-sm text-gray-500">Every physical unit currently held in the selected scope.</p></div><div className="overflow-x-auto"><table className="min-w-[1250px] w-full text-sm"><thead><tr className="border-b bg-gray-50 text-left"><th className="px-3 py-2">Brand</th><th className="px-3 py-2">Model</th><th className="px-3 py-2">RAM</th><th className="px-3 py-2">Storage</th><th className="px-3 py-2">Colour</th><th className="px-3 py-2">IMEI</th><th className="px-3 py-2">Branch</th><th className="px-3 py-2">Date Added</th><th className="px-3 py-2 text-right">Selling Price</th>{isManager && <th className="px-3 py-2 text-right">Buying Price</th>}{isManager && <th className="px-3 py-2">Actions</th>}</tr></thead><tbody>{filteredPhones.map((phone) => <tr key={phone._id} className="border-b"><td className="px-3 py-2">{phone.brand}</td><td className="px-3 py-2 font-semibold">{phone.model}</td><td className="px-3 py-2">{phone.ram}</td><td className="px-3 py-2">{phone.storage}</td><td className="px-3 py-2">{phone.color}</td><td className="px-3 py-2">{phone.imei}</td><td className="px-3 py-2">{phone.branch?.name || "—"}</td><td className="px-3 py-2">{dateTime(phone.createdAt)}</td><td className="px-3 py-2 text-right">{money(phone.sellingPrice)}</td>{isManager && <td className="px-3 py-2 text-right">{money(phone.buyingPrice)}</td>}{isManager && <td className="px-3 py-2"><div className="flex gap-2"><a href={`/edit-phone/${phone._id}`} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium">Edit</a><button onClick={() => deletePhone(phone._id)} className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium">Delete</button></div></td>}</tr>)}</tbody></table></div></section>
           </>
+        )}
+
+        {tab === "balancing" && isManager && (
+          <>
+            <section className="rounded-xl border bg-white p-4 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-gray-500">Inventory Intelligence</p>
+              <h2 className="mt-1 text-2xl font-black text-[#6b0f1a]">Stock Balancing</h2>
+              <p className="mt-1 max-w-3xl text-sm text-gray-500">Company-wide branch stock pressure and possible internal balancing opportunities. Every active branch remains visible, including zero-stock positions.</p>
+            </section>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <KPI title="Opportunities" value={balancingSummary.opportunities} detail="Possible internal moves" />
+              <KPI title="High Priority" value={balancingSummary.high} detail="Out / critical" />
+              <KPI title="Review" value={balancingSummary.review} detail="Low-stock" />
+              <KPI title="Branches" value={balancingSummary.destinations} detail="Need attention" />
+            </div>
+            {balancingRows.length === 0 ? (
+              <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-sm text-emerald-800">No balancing opportunity is currently supported by stock position.</section>
+            ) : (
+              <section className="overflow-hidden rounded-xl border bg-white shadow-sm">
+                <div className="border-b p-4"><h3 className="font-black">Recommended Internal Balancing</h3><p className="mt-1 text-xs text-gray-500">Stock-position signals. Validate sales velocity and demand before executing a transfer.</p></div>
+                <div className="overflow-x-auto"><table className="min-w-[1050px] w-full text-sm"><thead><tr className="border-b bg-gray-50 text-left"><th className="px-3 py-3">Model</th><th className="px-3 py-3">Destination</th><th className="px-3 py-3 text-right">Stock</th><th className="px-3 py-3">Position</th><th className="px-3 py-3">Possible Source</th><th className="px-3 py-3 text-right">Source Stock</th><th className="px-3 py-3">Recommendation</th></tr></thead><tbody>{balancingRows.map((row) => <tr key={row.key} className="border-b last:border-b-0"><td className="px-3 py-3"><p className="font-bold">{row.brand} {row.model}</p><p className="text-xs text-gray-500">{row.ram || "—"} • {row.storage || "—"}</p></td><td className="px-3 py-3 font-semibold">{row.destination}</td><td className="px-3 py-3 text-right font-black">{row.destinationUnits}</td><td className="px-3 py-3"><span className={`rounded-full px-2 py-1 text-xs font-bold ${row.priority === "HIGH" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}>{row.priority} • {row.destinationStatus === "OUT" ? "Out" : row.destinationStatus === "CRITICAL" ? "Critical" : "Low"}</span></td><td className="px-3 py-3 font-semibold">{row.source}</td><td className="px-3 py-3 text-right font-black">{row.sourceUnits}</td><td className="px-3 py-3 font-bold text-[#6b0f1a]">Consider moving {row.quantity} unit → {row.destination}<p className="mt-1 text-xs font-normal text-gray-500">Source remains above the {LOW_STOCK_LIMIT}-unit low-stock limit.</p></td></tr>)}</tbody></table></div>
+              </section>
+            )}
+            <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><strong>Management rule:</strong> This tab recommends; it does not create or execute transfers. Sales velocity is not yet used here, so review demand before execution.</section>
+          </>
+        )}
+
+        {tab === "catalogue" && (
+          <PhoneCatalogue isManager={isManager} />
         )}
 
         {tab === "history" && (

@@ -66,6 +66,40 @@ const getPhones =
   };
 
 // ===================================
+// STOCK LOOKUP DATA
+// ===================================
+// Dedicated read-only inventory lookup.
+// Unlike getPhones(), this endpoint intentionally returns
+// company-wide stock for Stock Lookup users so the UI can
+// represent every active branch, including zero-stock branches.
+const getStockLookup = async (req, res) => {
+  try {
+    const [phones, branches] = await Promise.all([
+      Phone.find({})
+        .populate("branch", "name")
+        .sort({ createdAt: -1 })
+        .lean(),
+
+      Branch.find({})
+        .select("name")
+        .sort({ name: 1 })
+        .lean(),
+    ]);
+
+    res.json({
+      phones,
+      branches,
+    });
+  } catch (error) {
+    console.log("Stock lookup error:", error);
+
+    res.status(500).json({
+      message: "Unable to load stock lookup data",
+    });
+  }
+};
+
+// ===================================
 // GET SINGLE PHONE
 // ===================================
 const getPhoneById =
@@ -218,44 +252,43 @@ const addPhone =
         entityId:
           phone._id,
 
-        itemName:
-          `${phone.brand} ${phone.model}${phone.ram || phone.storage ? ` ${phone.ram || ""}${phone.ram && phone.storage ? "/" : ""}${phone.storage || ""}` : ""}${phone.color ? ` (${phone.color})` : ""} (${phone.imei})`,
-
         description:
-          `Added ${phone.brand} ${phone.model}${phone.ram || phone.storage ? ` ${phone.ram || ""}${phone.ram && phone.storage ? "/" : ""}${phone.storage || ""}` : ""}${phone.color ? ` (${phone.color})` : ""} (${phone.imei}) to ${branchExists.name} inventory`,
+          `Added ${phone.brand} ${phone.model} (${phone.imei}) to inventory`,
       });
 
-// =========================
-// INVENTORY EVENT
-// =========================
-await inventoryEventEngine.publish({
-  type: "PURCHASE",
+      // =========================
+      // INVENTORY EVENT
+      // =========================
+        await inventoryEventEngine.publish({
 
-  brand: phone.brand,
+          type: "PURCHASE",
 
-  model: phone.model,
+          brand: phone.brand,
 
-  ram: phone.ram,
+          model: phone.model,
 
-  storage: phone.storage,
+          ram: phone.ram,
 
-  quantity: 1,
+          storage: phone.storage,
 
-  buyingPrice:
-    phone.buyingPrice,
+          quantity: 1,
 
-  sellingPrice:
-    phone.sellingPrice,
+          buyingPrice:
+            phone.buyingPrice,
 
-  branch:
-    assignedBranch,
+          sellingPrice:
+            phone.sellingPrice,
 
-  performedBy:
-    req.user.id,
+          branch:
+            assignedBranch,
 
-  source:
-    "ADD_PHONE",
-});
+          performedBy:
+            req.user.id,
+
+          source:
+            "ADD_PHONE",
+
+    });
 
       res
         .status(201)
