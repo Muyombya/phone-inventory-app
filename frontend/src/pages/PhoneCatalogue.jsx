@@ -10,6 +10,7 @@ function money(value) {
 
 function imageFor(product) {
   return (
+    product?.catalogue?.imageUrl ||
     product?.imageUrl ||
     product?.image ||
     product?.photo ||
@@ -326,10 +327,11 @@ function PhoneCatalogue({ isManager = false }) {
 
                     <div className="mt-3">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                        Smartphones
+                        {product.catalogue?.category || "Smartphones"}
                       </p>
                       <h3 className="mt-1 font-black text-gray-900">
-                        {product.brand} {product.model}
+                        {product.catalogue?.title ||
+                          `${product.brand} ${product.model}`}
                       </h3>
                       <p className="mt-1 text-xs font-semibold text-gray-500">
                         {product.ram || "—"} RAM • {product.storage || "—"}
@@ -371,12 +373,45 @@ function PhoneCatalogue({ isManager = false }) {
               ) : (
                 <div className="mt-4">
                   <ProductImage product={selected} className="h-44" />
-                  <h4 className="mt-3 font-black">
-                    {selected.brand} {selected.model}
+
+                  <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                    {selected.catalogue?.category || "Smartphones"}
+                  </p>
+
+                  <h4 className="mt-1 font-black">
+                    {selected.catalogue?.title ||
+                      `${selected.brand} ${selected.model}`}
                   </h4>
+
                   <p className="text-xs text-gray-500">
                     {selected.ram || "—"} RAM • {selected.storage || "—"}
                   </p>
+
+                  {selected.catalogue?.description && (
+                    <p className="mt-3 text-sm leading-5 text-gray-600">
+                      {selected.catalogue.description}
+                    </p>
+                  )}
+
+                  {Array.isArray(selected.catalogue?.highlights) &&
+                    selected.catalogue.highlights.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
+                          Highlights
+                        </p>
+
+                        <ul className="mt-2 space-y-1 text-sm text-gray-600">
+                          {selected.catalogue.highlights.map(
+                            (highlight, index) => (
+                              <li key={`${highlight}-${index}`}>
+                                • {highlight}
+                              </li>
+                            )
+                          )}
+                        </ul>
+                      </div>
+                    )}
+
                   <p className="mt-2 text-lg font-black text-blue-700">
                     {money(selected.sellingPrice)}
                   </p>
@@ -456,7 +491,10 @@ function PhoneCatalogue({ isManager = false }) {
           {filtered.map((product) => (
             <div key={product.key} className="catalogue-card rounded-xl border p-3">
               <ProductImage product={product} className="h-40" />
-              <h2 className="mt-2 font-black">{product.brand} {product.model}</h2>
+              <h2 className="mt-2 font-black">
+                {product.catalogue?.title ||
+                  `${product.brand} ${product.model}`}
+              </h2>
               <p className="text-xs text-gray-500">{product.ram || "—"} • {product.storage || "—"}</p>
               <p className="mt-1 font-black">{money(product.sellingPrice)}</p>
               <p className="text-xs">Current stock: {Number(product.currentStock || 0)}</p>
