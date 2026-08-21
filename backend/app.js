@@ -39,6 +39,8 @@ const returnRoutes =
 
 const app = express();
 
+const catalogueRoutes = require("./routes/catalogueRoutes");
+
 app.use(cors());
 
 app.use(express.json());
@@ -51,6 +53,11 @@ app.use(
 app.use(
   "/api/phones",
   phoneRoutes
+);
+
+app.use(
+  "/api/catalogue",
+  catalogueRoutes
 );
 
 app.use(
