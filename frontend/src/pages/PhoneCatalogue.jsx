@@ -67,7 +67,7 @@ function PhoneCatalogue({ isManager = false }) {
       try {
         setLoading(true);
         const [catalogRes, branchRes] = await Promise.all([
-          api.get(`/reports/product-catalog?limit=120`),
+          api.get(`/catalogue?limit=120`),
           api.get("/branches"),
         ]);
 
@@ -144,10 +144,23 @@ function PhoneCatalogue({ isManager = false }) {
   const branchPosition = useMemo(() => {
     if (!selected) return [];
 
-    return branches.map((branch) => ({
-      name: branch.name,
-      units: Number(selected.branches?.[branch.name] || 0),
-    }));
+    const availability =
+      Array.isArray(selected.branchAvailability)
+        ? selected.branchAvailability
+        : [];
+
+    return branches.map((branch) => {
+      const match = availability.find(
+        (item) =>
+          item.branchId === branch._id ||
+          item.branchName === branch.name
+      );
+
+      return {
+        name: branch.name,
+        units: Number(match?.units || 0),
+      };
+    });
   }, [selected, branches]);
 
   function printCatalogue() {
