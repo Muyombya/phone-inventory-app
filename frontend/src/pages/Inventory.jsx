@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../services/api";
+import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import PhoneCatalogue from "./PhoneCatalogue";
 
@@ -295,8 +296,7 @@ function Inventory() {
     destinations: new Set(balancingRows.map((r) => r.destination)).size,
   }), [balancingRows]);
 
-  async function exportToExcel() {
-    const XLSX = await import("xlsx");
+  function exportToExcel() {
     const data = filteredPhones.map((phone) => ({
       Brand: phone.brand,
       Model: phone.model,
@@ -351,24 +351,31 @@ function Inventory() {
       </div> : null}
 
       <div className="inventory-screen-only space-y-5">
-        <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <header className="text-center">
           <div><p className="text-xs font-bold uppercase tracking-[0.22em] text-gray-500">GadgetShop • Inventory</p><h1 className="mt-1 text-3xl font-black text-[#6b0f1a]">Inventory</h1><p className="mt-1 text-sm text-gray-500">Current stock by company or branch, traceability and complete product history.</p></div>
-          <div className="flex flex-wrap gap-2"><button onClick={exportToExcel} className="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white">Export Excel</button><button onClick={printInventory} className="rounded-lg bg-[#6b0f1a] px-4 py-2 text-sm font-bold text-white">Print Inventory Report</button></div>
         </header>
 
-        <nav className="flex flex-wrap gap-2">
+        <nav className="flex flex-wrap justify-center gap-2">
           <button onClick={() => changeTab("current")} className={`rounded-lg px-4 py-2 text-sm font-bold ${tab === "current" ? "bg-[#6b0f1a] text-white" : "border bg-white"}`}>Current Stock</button>
           <button onClick={() => changeTab("history")} className={`rounded-lg px-4 py-2 text-sm font-bold ${tab === "history" ? "bg-[#6b0f1a] text-white" : "border bg-white"}`}>Product History</button>
           {isManager && <button onClick={() => changeTab("balancing")} className={`rounded-lg px-4 py-2 text-sm font-bold ${tab === "balancing" ? "bg-[#6b0f1a] text-white" : "border bg-white"}`}>Stock Balancing</button>}
-          <button onClick={() => changeTab("catalogue")} className={`rounded-lg px-4 py-2 text-sm font-bold ${tab === "catalogue" ? "bg-[#f97316] text-white" : "border bg-white"}`}>Phone Catalogue</button>
+          <button onClick={() => changeTab("catalogue")} className={`rounded-lg px-4 py-2 text-sm font-bold ${tab === "catalogue" ? "bg-[#6b0f1a] text-white" : "border bg-white"}`}>Phone Catalogue</button>
         </nav>
 
         {tab === "current" && (
           <>
             <section className="rounded-xl border bg-white p-4 shadow-sm">
-              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                <div><p className="text-xs font-bold uppercase tracking-wider text-gray-500">Stock View</p><h2 className="mt-1 text-xl font-black text-gray-900">{scopeLabel}</h2><p className="mt-1 text-sm text-gray-500">Switch automatically between the complete company position and an individual branch.</p></div>
-                {isManager ? <label className="w-full md:w-80 text-sm font-semibold">View Stock<select value={stockScope} onChange={(e) => setStockScope(e.target.value)} className="mt-1 block w-full rounded-lg border px-3 py-3"><option value="">Company • All Branches</option>{branches.map((branch) => <option key={branch._id} value={branch._id}>{branch.name}</option>)}</select></label> : <div className="rounded-lg bg-gray-50 px-4 py-3 text-sm font-semibold">{scopeLabel}</div>}
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)_auto] lg:items-end">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Stock View</p>
+                  <h2 className="mt-1 text-xl font-black text-gray-900">{scopeLabel}</h2>
+                  <p className="mt-1 text-sm text-gray-500">Switch automatically between the complete company position and an individual branch.</p>
+                </div>
+                {isManager ? <label className="w-full text-sm font-semibold">View Stock<select value={stockScope} onChange={(e) => setStockScope(e.target.value)} className="mt-1 block w-full rounded-lg border px-3 py-3"><option value="">Company • All Branches</option>{branches.map((branch) => <option key={branch._id} value={branch._id}>{branch.name}</option>)}</select></label> : <div className="rounded-lg bg-gray-50 px-4 py-3 text-sm font-semibold">{scopeLabel}</div>}
+                <div className="flex flex-wrap gap-2 lg:justify-end">
+                  <button onClick={exportToExcel} className="rounded-lg border border-[#6b0f1a] bg-white px-4 py-2.5 text-sm font-bold text-[#6b0f1a] transition hover:bg-red-50">Export to Excel</button>
+                  <button onClick={printInventory} className="rounded-lg bg-[#6b0f1a] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#560c16]">Print Inventory Report</button>
+                </div>
               </div>
             </section>
 
