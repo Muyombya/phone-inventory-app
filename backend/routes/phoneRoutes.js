@@ -87,6 +87,24 @@ router.post(
 );
 
 
+// ==============================
+// BULK INVENTORY UPDATE
+// ==============================
+
+router.put(
+  "/bulk-update",
+  protect,
+  bulkInventoryUpdate
+);
+
+// ==============================
+// TRANSFER PHONE
+// ==============================
+router.put(
+  "/transfer/:id",
+  protect,
+  transferPhone
+);
 
 // ==============================
 // UPDATE PHONE
@@ -97,15 +115,7 @@ router.put(
   updatePhone
 );
 
-// ==============================
-// BULK INVENTORY UPDATE
-// ==============================
 
-router.put(
-  "/bulk-update",
-  protect,
-  bulkInventoryUpdate
-);
 
 // ==============================
 // DELETE PHONE
@@ -119,15 +129,6 @@ router.delete(
 
 
 
-
-// ==============================
-// TRANSFER PHONE
-// ==============================
-router.put(
-  "/transfer/:id",
-  protect,
-  transferPhone
-);
 
 
 
