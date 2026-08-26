@@ -49,6 +49,24 @@ router.get(
 );
 
 // ==============================
+// BULK INVENTORY PREVIEW
+// ==============================
+router.get(
+  "/bulk-preview",
+  protect,
+  getBulkInventoryPreview
+);
+
+// ==============================
+// BULK INVENTORY OPTIONS
+// ==============================
+router.get(
+  "/bulk-options",
+  protect,
+  getBulkOptions
+);
+
+// ==============================
 // GET SINGLE PHONE
 // ==============================
 router.get(
@@ -80,15 +98,6 @@ router.put(
 );
 
 // ==============================
-// BULK INVENTORY PREVIEW
-// ==============================
-router.get(
-  "/bulk-preview",
-  protect,
-  getBulkInventoryPreview
-);
-
-// ==============================
 // BULK INVENTORY UPDATE
 // ==============================
 
@@ -96,15 +105,6 @@ router.put(
   "/bulk-update",
   protect,
   bulkInventoryUpdate
-);
-
-// ==============================
-// BULK INVENTORY OPTIONS
-// ==============================
-router.get(
-  "/bulk-options",
-  protect,
-  getBulkOptions
 );
 
 // ==============================
